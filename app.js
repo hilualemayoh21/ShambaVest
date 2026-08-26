@@ -91,57 +91,39 @@ class AppState {
     this.isAdminMode = false;
     this.adminActiveTab = 'deposit';
 
+    if (!localStorage.getItem('twiga_admin_wiped_v1')) {
+      localStorage.removeItem('twiga_admin_deposits');
+      localStorage.removeItem('twiga_admin_withdrawals');
+      localStorage.removeItem('twiga_admin_users_list');
+      localStorage.setItem('twiga_admin_wiped_v1', 'true');
+    }
+
     const savedDeposits = JSON.parse(localStorage.getItem('twiga_admin_deposits') || 'null');
-    this.adminDeposits = savedDeposits || [
-      { id: 'dep_1', phone: '251949799890', amount: '5,000.00 ETB', rawAmount: 5000, bank: 'CBE', txId: 'Dear Wondayehu Daniel Mignane You successfully transferred ETB5000.00 from account 1*******0141 to account 1*******1897 (Abush Solomon Tareke). Service charge of ETB 1.00 and VAT(15%) of ETB0.15 and Disaster Recovery(5%) of 0.05 with total ETB5001.20 .Your current balance is ETB52,832.29. Thanks for Banking with CBE. https://mreciept.cbe.com.et/v2-cXGjqfBgbLzf491Hn for feedback: https://forms.gle/kGNGQpG3mQCCk3iD6', status: 'Pending' },
-      { id: 'dep_2', phone: '32994030', amount: '700.00 ETB', rawAmount: 700, bank: 'CBE', txId: 'FT262244HZTR', status: 'Pending' },
-      { id: 'dep_3', phone: '05969651', amount: '700.00 ETB', rawAmount: 700, bank: 'CBE', txId: 'FT2624J97HV', status: 'Pending' },
-      { id: 'dep_4', phone: '76668956', amount: '700.00 ETB', rawAmount: 700, bank: 'CBE', txId: '1000729928872', status: 'Pending' },
-      { id: 'dep_5', phone: '6990603', amount: '700.00 ETB', rawAmount: 700, bank: 'CBE', txId: 'Dear Temesgen Tedila Gonchile You have received ETB 255.00 from account 1*******1897 (Abush Solomon Tareke) to your account 1*******9086. Your current balance is ETB12,728.27. Thanks for Banking with CBE. https://mreciept.cbe.com.et/v2-cXJoxXbQX28g2dHI for feedback: https://forms.gle/kGNGQpG3mQCCk3iD6', status: 'Rejected' }
-    ];
+    this.adminDeposits = savedDeposits || [];
 
     const savedWithdrawals = JSON.parse(localStorage.getItem('twiga_admin_withdrawals') || 'null');
-    this.adminWithdrawals = savedWithdrawals || [
-      { id: 'w_1', phone: '909175504', bank: 'Telebirr', account: '0909175504', amount: 255, status: 'Processing' },
-      { id: 'w_2', phone: '0983878498', bank: 'CBE', account: '1000681781707', amount: 255, status: 'Processing' },
-      { id: 'w_3', phone: '941414141', bank: 'CBE', account: '1000406593677', amount: 1105, status: 'Processing' },
-      { id: 'w_4', phone: '910789349', bank: 'CBE', account: '1000454061498', amount: 1360, status: 'Processing' },
-      { id: 'w_5', phone: '911460732', bank: 'CBE', account: '1000127361488', amount: 255, status: 'Processing' },
-      { id: 'w_6', phone: '944331234', bank: 'CBE', account: '1000640843466', amount: 2210, status: 'Processing' },
-      { id: 'w_7', phone: '910591628', bank: 'CBE', account: '910591628', amount: 255, status: 'Processing' },
-      { id: 'w_8', phone: '964120641', bank: 'CBE', account: '1000582586717', amount: 425, status: 'Processing' },
-      { id: 'w_9', phone: '910897605', bank: 'Telebirr', account: '0910897605', amount: 425, status: 'Processing' },
-      { id: 'w_10', phone: '943211234', bank: 'CBE', account: '1000742780302', amount: 680, status: 'Processing' },
-      { id: 'w_11', phone: '989370042', bank: 'Telebirr', account: '0918977673', amount: 1700, status: 'Processing' },
-      { id: 'w_12', phone: '954321234', bank: 'CBE', account: '1000566833127', amount: 3060, status: 'Processing' },
-      { id: 'w_13', phone: '964235432', bank: 'CBE', account: '1000620894978', amount: 1785, status: 'Processing' }
-    ];
+    this.adminWithdrawals = savedWithdrawals || [];
 
     const savedAdminUsers = JSON.parse(localStorage.getItem('twiga_admin_users_list') || 'null');
-    this.adminUsersList = savedAdminUsers || [
-      { phone: '251940834', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-14 02:23:30' },
-      { phone: '2515100022', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-14 01:45:54' },
-      { phone: '251647596', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-14 01:22:10' },
-      { phone: '251078971', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-14 00:05:13' },
-      { phone: '2513947110', balance: '210.00 ETB', rawBalance: 210, role: 'User', joined: '2026-08-13 23:56:39' },
-      { phone: '251205264', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-13 23:28:25' },
-      { phone: '251983355', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-13 17:18:36' },
-      { phone: '251081147', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-13 15:51:56' },
-      { phone: '251023354', balance: '200.00 ETB', rawBalance: 200, role: 'User', joined: '2026-08-13 13:16:50' }
-    ];
+    this.adminUsersList = savedAdminUsers || [];
+
+    if (!localStorage.getItem('twiga_admin_vip_v3')) {
+      localStorage.removeItem('twiga_admin_vip_plans');
+      localStorage.setItem('twiga_admin_vip_v3', 'true');
+    }
 
     const savedVipPlans = JSON.parse(localStorage.getItem('twiga_admin_vip_plans') || 'null');
     this.adminVipPlans = savedVipPlans || [
-      { name: 'VIP 1', price: '700.00 ETB', daily: '150.00 ETB', duration: '365 Days' },
-      { name: 'VIP 2', price: '1,300.00 ETB', daily: '280.00 ETB', duration: '365 Days' },
-      { name: 'VIP 3', price: '2,800.00 ETB', daily: '626.00 ETB', duration: '365 Days' },
-      { name: 'VIP 4', price: '5,000.00 ETB', daily: '1,210.00 ETB', duration: '365 Days' },
-      { name: 'VIP 5', price: '8,000.00 ETB', daily: '2,080.00 ETB', duration: '365 Days' },
-      { name: 'VIP 6', price: '12,000.00 ETB', daily: '3,360.00 ETB', duration: '365 Days' },
-      { name: 'VIP 7', price: '30,000.00 ETB', daily: '9,000.00 ETB', duration: '365 Days' },
-      { name: 'VIP 8', price: '70,000.00 ETB', daily: '24,500.00 ETB', duration: '365 Days' },
-      { name: 'VIP 9', price: '100,000.00 ETB', daily: '40,000.00 ETB', duration: '365 Days' },
-      { name: 'VIP 10', price: '200,000.00 ETB', daily: '90,000.00 ETB', duration: '365 Days' }
+      { name: 'VIP 1', price: '600.00 ETB', daily: '70.00 ETB', duration: '160 Days', status: 'active' },
+      { name: 'VIP 2', price: '1,800.00 ETB', daily: '230.00 ETB', duration: '150 Days', status: 'active' },
+      { name: 'VIP 3', price: '3,800.00 ETB', daily: '520.00 ETB', duration: '140 Days', status: 'active' },
+      { name: 'VIP 4', price: '7,800.00 ETB', daily: '1,200.00 ETB', duration: '130 Days', status: 'coming_soon' },
+      { name: 'VIP 5', price: '12,800.00 ETB', daily: '2,300.00 ETB', duration: '120 Days', status: 'coming_soon' },
+      { name: 'VIP 6', price: '21,800.00 ETB', daily: '4,600.00 ETB', duration: '110 Days', status: 'coming_soon' },
+      { name: 'VIP 7', price: '37,700.00 ETB', daily: '10,000.00 ETB', duration: '100 Days', status: 'coming_soon' },
+      { name: 'VIP 8', price: '77,000.00 ETB', daily: '29,000.00 ETB', duration: '90 Days', status: 'coming_soon' },
+      { name: 'VIP 9', price: '137,000.00 ETB', daily: '65,000.00 ETB', duration: '80 Days', status: 'coming_soon' },
+      { name: 'VIP 10', price: '217,000.00 ETB', daily: '130,000.00 ETB', duration: '70 Days', status: 'coming_soon' }
     ];
   }
 
@@ -317,6 +299,18 @@ function updateCarouselPosition() {
   }
 }
 
+// Unique Referral Code Generator
+function generateUniqueCodeForPhone(phone) {
+  if (!phone) phone = 'user_' + Date.now();
+  let hash = 0;
+  const str = phone + '_shamba_seed_salt';
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0').substring(0, 8);
+}
+
 // Password Visibility Toggle
 function togglePassVisibility(inputId) {
   const input = document.getElementById(inputId);
@@ -367,20 +361,42 @@ function setupEventListeners() {
         return;
       }
 
+      // Find referrers up to 3 levels deep based on inviteVal
+      let l1ReferrerPhone = null;
+      let l2ReferrerPhone = null;
+      let l3ReferrerPhone = null;
+
+      if (inviteVal) {
+        for (let uPhone in state.registeredUsers) {
+          const u = state.registeredUsers[uPhone];
+          if (u.inviteCode === inviteVal || u.referralCode === inviteVal) {
+            l1ReferrerPhone = u.mobile;
+            l2ReferrerPhone = u.level1Referrer || null;
+            l3ReferrerPhone = u.level2Referrer || null;
+            break;
+          }
+        }
+      }
+
       // Create new user object
+      const userUniqueCode = generateUniqueCodeForPhone(mobileVal);
       const newUser = {
         mobile: mobileVal,
         fullMobile: fullMobile,
         password: passVal,
-        inviteCode: inviteVal,
-        balance: 50.00, // Welcome registration bonus
+        inviteCode: userUniqueCode,
+        referralCode: userUniqueCode,
+        level1Referrer: l1ReferrerPhone,
+        level2Referrer: l2ReferrerPhone,
+        level3Referrer: l3ReferrerPhone,
+        balance: 0.00,
         accumulatedYield: 0.00,
+        totalTeamCommission: 0.00,
+        teamCommissionBreakdown: { level1: 0, level2: 0, level3: 0 },
         vipLevel: 'VIP 1',
         registeredAt: new Date().toISOString(),
         activePlans: [],
-        history: [
-          { type: 'Registration Bonus', amount: 50.00, date: new Date().toLocaleDateString(), status: 'COMPLETED' }
-        ]
+        history: []
       };
 
       // Save user to directory
@@ -390,8 +406,8 @@ function setupEventListeners() {
       const joinedStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
       state.adminUsersList.unshift({
         phone: mobileVal,
-        balance: '50.00 ETB',
-        rawBalance: 50.00,
+        balance: '0.00 ETB',
+        rawBalance: 0.00,
         role: 'User',
         bank: 'N/A',
         ac: 'N/A',
@@ -567,11 +583,21 @@ function renderAppView() {
     }
   });
 
+  const navBar = document.querySelector('.bottom-nav-bar');
+  if (navBar) {
+    if (state.activeTab === 'auth') {
+      navBar.style.display = 'none';
+    } else {
+      navBar.style.display = 'flex'; // Restore for other tabs
+    }
+  }
+
   const mainContent = document.querySelector('.main-content');
   if (mainContent) mainContent.scrollTop = 0;
 
   if (state.activeTab === 'home') {
     updateCarouselPosition();
+    renderVipButtons();
     if (!window.hasShownHomeModal) {
       setTimeout(() => openModal('homeAnnouncementModal'), 500);
       window.hasShownHomeModal = true;
@@ -579,6 +605,8 @@ function renderAppView() {
   }
   if (state.activeTab === 'recharge') renderRechargeView();
   if (state.activeTab === 'income') renderIncomeView();
+  if (state.activeTab === 'team') renderTeamView();
+  if (state.activeTab === 'share') renderShareView();
   if (state.activeTab === 'profile') renderProfileView();
   if (state.activeTab === 'balanceDetails') renderBalanceDetailsView();
   if (state.activeTab === 'rechargeRecords') renderRechargeRecordsView();
@@ -600,6 +628,62 @@ function selectRechargeAmount(amount, element) {
   if (btn) {
     btn.innerText = `Pay Br ${amount.toLocaleString()}`;
   }
+}
+
+function parseNum(val) {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  return parseFloat(val.toString().replace(/[^0-9.]/g, '')) || 0;
+}
+
+// Render dynamic VIP plan buttons based on admin state
+function renderVipButtons() {
+  document.querySelectorAll('.vip-action-btn').forEach(btn => {
+    const index = parseInt(btn.dataset.vipIndex);
+    const planState = state.adminVipPlans[index];
+    if (!planState) return;
+
+    const priceNum = parseNum(planState.price);
+    const dailyNum = parseNum(planState.daily);
+    const daysNum = parseNum(planState.duration) || 365;
+    const totalNum = dailyNum * daysNum;
+
+    btn.dataset.price = priceNum;
+    btn.dataset.daily = dailyNum;
+    btn.dataset.days = daysNum;
+    btn.dataset.total = totalNum;
+
+    const card = btn.closest('.produce-card-white');
+    if (card) {
+      const priceEl = card.querySelector('.produce-price-large');
+      if (priceEl) priceEl.innerText = `Br${priceNum.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+      const dataCells = card.querySelectorAll('.data-cell-val');
+      if (dataCells && dataCells.length >= 3) {
+        dataCells[0].innerText = `Br ${dailyNum.toLocaleString()}`;
+        dataCells[1].innerText = `${daysNum}`;
+        dataCells[2].innerText = `Br ${totalNum.toLocaleString()}`;
+      }
+    }
+
+    if (planState.status === 'active') {
+      btn.style.background = 'var(--color-primary)';
+      btn.style.borderColor = 'var(--color-primary)';
+      btn.style.color = '#FFFFFF';
+      btn.style.cursor = 'pointer';
+      btn.innerHTML = `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Buy now`;
+      btn.onclick = () => openPurchaseModal(
+        btn.dataset.planName, priceNum, totalNum, dailyNum, daysNum
+      );
+    } else {
+      btn.style.background = '#94a3b8';
+      btn.style.borderColor = '#94a3b8';
+      btn.style.color = 'white';
+      btn.style.cursor = 'not-allowed';
+      btn.innerHTML = `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Coming soon`;
+      btn.onclick = null;
+    }
+  });
 }
 
 function renderRechargeView() {
@@ -639,6 +723,20 @@ function openPaymentSelection() {
 
 let paymentTimerInterval = null;
 
+function closePaymentGateway() {
+  const gwView = document.getElementById('paymentGatewayView');
+  if (gwView) gwView.style.display = 'none';
+  if (paymentTimerInterval) clearInterval(paymentTimerInterval);
+  
+  // Go back to recharge view
+  const rechargeView = document.getElementById('rechargeView');
+  if (rechargeView) rechargeView.style.display = 'block';
+  
+  // Show bottom nav
+  const navBar = document.querySelector('.bottom-nav-bar');
+  if (navBar) navBar.style.display = 'flex';
+}
+
 function openPaymentGateway(method) {
   document.querySelectorAll('main > section').forEach(el => el.style.display = 'none');
   const gwView = document.getElementById('paymentGatewayView');
@@ -651,14 +749,14 @@ function openPaymentGateway(method) {
     document.getElementById('gwLogoTelebirr').style.display = 'block';
     document.getElementById('gwLogoCBE').style.display = 'none';
     document.getElementById('gwChannelName').innerText = 'Telebirr Wallet';
-    document.getElementById('gwAccountName').innerText = 'Meto';
-    document.getElementById('gwAccountNumber').innerText = '0959871054';
+    document.getElementById('gwAccountName').innerText = 'Menkem';
+    document.getElementById('gwAccountNumber').innerText = '1000790951488';
   } else {
     document.getElementById('gwLogoTelebirr').style.display = 'none';
     document.getElementById('gwLogoCBE').style.display = 'block';
     document.getElementById('gwChannelName').innerText = 'Commercial Bank of Ethiopia';
-    document.getElementById('gwAccountName').innerText = 'Mezumre knife';
-    document.getElementById('gwAccountNumber').innerText = '1000764507758';
+    document.getElementById('gwAccountName').innerText = 'Menkem';
+    document.getElementById('gwAccountNumber').innerText = '1000790951488';
   }
 
   // Simple Timer Simulation
@@ -747,7 +845,7 @@ function renderIncomeView() {
     if (!user.activePlans || user.activePlans.length === 0) {
       container.innerHTML = `
         <div class="balance-info-card" style="text-align: center; color: var(--color-text-secondary); font-size: 13px;">
-          No active investment plans yet. Go to Home page and buy Plan A, B, C, D, E, or F!
+          No active investment plans yet. Go to Home page and buy VIP I, II, III, IV, V, or VI!
         </div>
       `;
     } else {
@@ -838,7 +936,28 @@ function renderBalanceDetailsView() {
   const balEl = document.getElementById('balanceDetailsVal');
   if (balEl) balEl.innerText = `Br ${user.balance.toFixed(2)}`;
 
-  switchBalanceTab('my');
+  const balCard = document.querySelector('#balanceDetailsView .balance-green-card');
+  const tabsContainer = document.querySelector('#balanceDetailsView .balance-tabs-container');
+  const recordsContainer = document.getElementById('balanceRecordsContainer');
+
+  if (!user.activePlans || user.activePlans.length === 0) {
+    if (balCard) balCard.style.display = 'none';
+    if (tabsContainer) tabsContainer.style.display = 'none';
+    if (recordsContainer) {
+      recordsContainer.innerHTML = `
+        <div class="empty-state-no-data" style="margin-top: 50px;">
+          <div class="empty-state-watermark">NO ACTIVE PLANS</div>
+          <div style="text-align:center; color:var(--color-text-secondary); font-size:13px; margin-top:10px;">
+            You have not bought any VIP plans yet.
+          </div>
+        </div>
+      `;
+    }
+  } else {
+    if (balCard) balCard.style.display = 'block';
+    if (tabsContainer) tabsContainer.style.display = 'flex';
+    switchBalanceTab('my');
+  }
 }
 
 function switchBalanceTab(tabType) {
@@ -1119,6 +1238,9 @@ function confirmPurchaseProduct() {
   state.registeredUsers[user.mobile] = user;
   state.save();
 
+  // Distribute Level 1 (25%), Level 2 (3%), and Level 3 (2%) Team Commissions
+  distributeTeamCommissions(user, prod.price, `purchase of ${prod.name}`);
+
   showToast(`Successfully purchased ${prod.name}! Check your Income tab.`);
   renderAppView();
 }
@@ -1207,18 +1329,247 @@ function openTreasureModal() {
   renderAppView();
 }
 
-// Copy Code & Share Handlers
-function copyRefCode() {
-  const input = document.getElementById('teamRefCode');
-  if (input) {
-    input.select();
-    document.execCommand('copy');
-    showToast('Referral code copied: 150bc0d8');
+// Share View Rendering & Dynamic Unique Link Handlers
+function renderShareView() {
+  let code = 'f513800e';
+  if (state.currentUser) {
+    if (!state.currentUser.inviteCode && !state.currentUser.referralCode) {
+      state.currentUser.inviteCode = generateUniqueCodeForPhone(state.currentUser.mobile || 'user');
+      state.currentUser.referralCode = state.currentUser.inviteCode;
+      state.save();
+    }
+    code = state.currentUser.referralCode || state.currentUser.inviteCode || 'f513800e';
+  }
+
+  const baseOrigin = (window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'https://shambavest.app';
+  const shareLink = `${baseOrigin}/?ref=${code}`;
+
+  const qrImg = document.getElementById('shareQrCodeImg');
+  const linkInput = document.getElementById('shareLinkInput');
+  const codeInput = document.getElementById('shareCodeInput');
+
+  if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shareLink)}`;
+  if (linkInput) linkInput.value = shareLink;
+  if (codeInput) codeInput.value = code;
+}
+
+function copyUserShareLink() {
+  const linkInput = document.getElementById('shareLinkInput');
+  if (linkInput) {
+    linkInput.select();
+    const linkVal = linkInput.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(linkVal).then(() => {
+        showToast('✅ Unique promotion link copied to clipboard!');
+      }).catch(() => {
+        document.execCommand('copy');
+        showToast('✅ Unique promotion link copied to clipboard!');
+      });
+    } else {
+      document.execCommand('copy');
+      showToast('✅ Unique promotion link copied to clipboard!');
+    }
   }
 }
 
-function copyShareLink() {
-  showToast('Invitation link copied to clipboard!');
+function copyUserShareCode() {
+  const codeInput = document.getElementById('shareCodeInput');
+  if (codeInput) {
+    codeInput.select();
+    const codeVal = codeInput.value;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(codeVal).then(() => {
+        showToast(`✅ Referral code ${codeVal} copied to clipboard!`);
+      }).catch(() => {
+        document.execCommand('copy');
+        showToast(`✅ Referral code ${codeVal} copied to clipboard!`);
+      });
+    } else {
+      document.execCommand('copy');
+      showToast(`✅ Referral code ${codeVal} copied to clipboard!`);
+    }
+  }
+}
+
+// Team View State & Data Handler (Matching Reference Screenshot Features)
+let currentTeamLevel = 1;
+
+function switchTeamLevelTab(levelNum) {
+  currentTeamLevel = levelNum;
+
+  [1, 2, 3].forEach(lvl => {
+    const btn = document.getElementById(`teamTabLv${lvl}`);
+    if (btn) btn.classList.toggle('active', lvl === levelNum);
+  });
+
+  renderTeamView();
+}
+
+/* ==========================================================================
+   LEVEL 1 (25%), LEVEL 2 (3%), LEVEL 3 (2%) COMMISSION CALCULATOR & DISTRIBUTOR
+   ========================================================================== */
+function distributeTeamCommissions(purchaserUser, amount, sourceDesc) {
+  if (!purchaserUser || !amount || amount <= 0) return;
+
+  const commissionRates = [
+    { level: 1, rate: 0.25, percentText: '25%', referrerPhone: purchaserUser.level1Referrer },
+    { level: 2, rate: 0.03, percentText: '3%', referrerPhone: purchaserUser.level2Referrer },
+    { level: 3, rate: 0.02, percentText: '2%', referrerPhone: purchaserUser.level3Referrer }
+  ];
+
+  commissionRates.forEach(tier => {
+    const refPhone = tier.referrerPhone;
+    if (!refPhone) return;
+
+    const commissionAmount = parseFloat((amount * tier.rate).toFixed(2));
+    if (commissionAmount <= 0) return;
+
+    // Find target referrer in state.registeredUsers
+    let referrer = state.registeredUsers[refPhone];
+    if (!referrer) {
+      for (let k in state.registeredUsers) {
+        if (k.includes(refPhone) || refPhone.includes(k)) {
+          referrer = state.registeredUsers[k];
+          break;
+        }
+      }
+    }
+
+    if (referrer) {
+      referrer.balance = (referrer.balance || 0) + commissionAmount;
+      referrer.totalTeamCommission = (referrer.totalTeamCommission || 0) + commissionAmount;
+
+      if (!referrer.teamCommissionBreakdown) {
+        referrer.teamCommissionBreakdown = { level1: 0, level2: 0, level3: 0 };
+      }
+      if (tier.level === 1) referrer.teamCommissionBreakdown.level1 += commissionAmount;
+      if (tier.level === 2) referrer.teamCommissionBreakdown.level2 += commissionAmount;
+      if (tier.level === 3) referrer.teamCommissionBreakdown.level3 += commissionAmount;
+
+      if (!referrer.history) referrer.history = [];
+      referrer.history.unshift({
+        id: 'COMM_' + Date.now() + '_' + tier.level,
+        type: `Level ${tier.level} Commission (${tier.percentText})`,
+        amount: commissionAmount,
+        date: new Date().toLocaleString(),
+        status: 'COMPLETED',
+        desc: `Earned Br ${commissionAmount.toFixed(2)} (${tier.percentText}) from ${purchaserUser.mobile} ${sourceDesc}`
+      });
+
+      // Update admin user list record for referrer
+      const adminRec = state.adminUsersList.find(u => u.phone === referrer.mobile);
+      if (adminRec) {
+        adminRec.rawBalance = referrer.balance;
+        adminRec.balance = `${referrer.balance.toFixed(2)} ETB`;
+      }
+
+      // If referrer is current logged-in user, sync current session
+      if (state.currentUser && (state.currentUser.mobile === referrer.mobile || state.currentUser.mobile === refPhone)) {
+        state.currentUser.balance = referrer.balance;
+        state.currentUser.totalTeamCommission = referrer.totalTeamCommission;
+        state.currentUser.teamCommissionBreakdown = referrer.teamCommissionBreakdown;
+        state.currentUser.history = referrer.history;
+      }
+
+      showToast(`🎁 Level ${tier.level} (${tier.percentText}) Commission: Br ${commissionAmount.toFixed(2)} credited!`);
+    }
+  });
+
+  state.save();
+}
+
+function renderTeamView() {
+  const currentTab = currentTeamLevel || 1;
+  const user = state.currentUser;
+
+  let members = [];
+  let totalRecharge = 0;
+  let totalSize = 0;
+  let totalCommission = 0;
+
+  // Calculate live team stats strictly from registered users
+  if (user) {
+    for (let k in state.registeredUsers) {
+      const u = state.registeredUsers[k];
+      if (u.mobile === user.mobile) continue;
+
+      let isLevelMember = false;
+      if (currentTab === 1 && u.level1Referrer === user.mobile) isLevelMember = true;
+      if (currentTab === 2 && u.level2Referrer === user.mobile) isLevelMember = true;
+      if (currentTab === 3 && u.level3Referrer === user.mobile) isLevelMember = true;
+
+      if (isLevelMember) {
+        const userRecharge = (u.activePlans || []).reduce((sum, p) => sum + (p.price || 0), 0);
+        const userWithdraw = (u.history || []).filter(h => h && h.type && h.type.includes('Withdraw')).reduce((sum, h) => sum + Math.abs(h.amount || 0), 0);
+        const joinDate = u.registeredAt ? u.registeredAt.replace('T', ' ').substring(0, 19) : new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        const masked = u.mobile.length >= 7 ? u.mobile.substring(0, 3) + '****' + u.mobile.substring(u.mobile.length - 5) : u.mobile;
+        members.push({
+          phone: masked,
+          recharge: userRecharge,
+          withdraw: userWithdraw,
+          time: joinDate
+        });
+      }
+    }
+
+    totalSize = members.length;
+    totalRecharge = members.reduce((sum, m) => sum + m.recharge, 0);
+
+    if (user.teamCommissionBreakdown) {
+      if (currentTab === 1) totalCommission = user.teamCommissionBreakdown.level1 || 0;
+      if (currentTab === 2) totalCommission = user.teamCommissionBreakdown.level2 || 0;
+      if (currentTab === 3) totalCommission = user.teamCommissionBreakdown.level3 || 0;
+    } else {
+      const rate = currentTab === 1 ? 0.25 : (currentTab === 2 ? 0.03 : 0.02);
+      totalCommission = totalRecharge * rate;
+    }
+  }
+
+  const rechargeEl = document.getElementById('teamRechargeVal');
+  const sizeEl = document.getElementById('teamSizeVal');
+  const commEl = document.getElementById('teamCommissionVal');
+  const container = document.getElementById('teamMembersList');
+
+  if (rechargeEl) rechargeEl.innerText = `Br ${totalRecharge.toLocaleString()}`;
+  if (sizeEl) sizeEl.innerText = totalSize;
+  if (commEl) commEl.innerText = `Br ${totalCommission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (container) {
+    if (members.length === 0) {
+      container.innerHTML = `
+        <div style="background: var(--color-surface); border-radius: var(--radius-lg); padding: 32px 20px; text-align: center; border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+          <div style="width: 56px; height: 56px; margin: 0 auto 12px auto; background: var(--color-surface-subtle); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border);">
+            <svg class="svg-icon" viewBox="0 0 24 24" width="28" height="28" style="stroke: var(--color-text-secondary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div style="font-family: var(--font-family); font-size: 15px; font-weight: 700; color: var(--color-text-main); margin-bottom: 4px;">No Level ${currentTab} Team Members Yet</div>
+          <div style="font-size: 12.5px; color: var(--color-text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Share your unique link or code from the Share tab to invite friends and earn 25%, 3%, or 2% commissions!</div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = members.map(member => `
+        <div class="team-member-card">
+          <div class="team-member-info-left">
+            <div class="team-member-phone">Mobile: ${member.phone}</div>
+            <div class="team-member-stats-row">
+              <div>Recharge: <span>${member.recharge}</span></div>
+              <div>Withdraw: <span>${member.withdraw}</span></div>
+            </div>
+            <div class="team-member-time">Time : ${member.time}</div>
+          </div>
+          <div class="team-member-badge-right">
+            <div class="brand-logo-icon" style="width:34px; height:34px; border-radius:8px;">
+              <svg viewBox="0 0 40 40" width="24" height="24" fill="none">
+                <rect width="40" height="40" rx="10" fill="#0B0E19"/>
+                <path d="M12 26C12 18 18 12 26 12C26 20 20 26 12 26Z" fill="#10B981"/>
+                <path d="M14 24L20 18L23 21L28 15" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
 }
 
 /* ==========================================================================
@@ -1536,12 +1887,23 @@ function renderAdminVip() {
       <td style="font-weight:800; color:#FBBF24;">${plan.name}</td>
       <td style="font-weight:700;">${plan.price}</td>
       <td style="color:#10B981; font-weight:700;">${plan.daily}</td>
-      <td style="color:#94A3B8;">${plan.duration}</td>
+      <td style="color:#94A3B8;">${plan.duration || '160 Days'}</td>
       <td>
-        <button type="button" class="btn-admin-approve" style="background:#F59E0B; color:#0F172A;" onclick="editVipPlan(${index})">Edit</button>
+        <button type="button" class="btn-admin-approve" style="background:#F59E0B; color:#0F172A; margin-bottom: 4px;" onclick="editVipPlan(${index})">Edit</button>
+        <button type="button" class="btn-admin-approve" style="background:${plan.status === 'active' ? '#EF4444' : '#10B981'}; color:#FFFFFF;" onclick="toggleVipStatus(${index})">Toggle</button>
       </td>
     </tr>
   `).join('');
+}
+
+function toggleVipStatus(index) {
+  const plan = state.adminVipPlans[index];
+  if (!plan) return;
+  plan.status = plan.status === 'active' ? 'coming_soon' : 'active';
+  state.save();
+  showToast(`✅ ${plan.name} status changed to ${plan.status}!`);
+  renderAdminVip();
+  if (state.activeTab === 'home') renderVipButtons();
 }
 
 function editVipPlan(index) {
@@ -1552,12 +1914,16 @@ function editVipPlan(index) {
   if (!newPrice) return;
   const newDaily = prompt(`Enter new Daily Income for ${plan.name}:`, plan.daily);
   if (!newDaily) return;
+  const newDuration = prompt(`Enter new Duration for ${plan.name}:`, plan.duration || '160 Days');
+  if (!newDuration) return;
 
   plan.price = newPrice;
   plan.daily = newDaily;
+  plan.duration = newDuration;
   state.save();
   showToast(`✅ ${plan.name} updated successfully!`);
   renderAdminVip();
+  renderVipButtons();
 }
 
 // Action Logic Handlers (Bi-directional Real-Time Linking)
@@ -1568,11 +1934,13 @@ function approveDepositRequest(depId) {
   dep.status = 'Approved';
   const creditAmt = dep.rawAmount || parseFloat(dep.amount) || 700;
 
+  let targetUser = null;
   // Credit target user in state.registeredUsers
   for (let key in state.registeredUsers) {
     const user = state.registeredUsers[key];
     if (user.mobile.includes(dep.phone) || dep.phone.includes(user.mobile)) {
       user.balance += creditAmt;
+      targetUser = user;
       const h = (user.history || []).find(item => item.id === depId || item.type.includes('Deposit'));
       if (h) h.status = 'COMPLETED';
     }
@@ -1580,6 +1948,11 @@ function approveDepositRequest(depId) {
 
   if (state.currentUser && (state.currentUser.mobile.includes(dep.phone) || dep.phone.includes(state.currentUser.mobile))) {
     state.currentUser.balance += creditAmt;
+    targetUser = state.currentUser;
+  }
+
+  if (targetUser) {
+    distributeTeamCommissions(targetUser, creditAmt, 'recharge deposit approval');
   }
 
   state.save();
