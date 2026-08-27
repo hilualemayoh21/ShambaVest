@@ -91,26 +91,25 @@ body {
   stroke-width: 2;
 }
 
-/* Splash Loading Screen Overlay (100% Centered Layout) */
+/* App Launch Splash Loading Overlay (Enhanced Modern Design) */
 .splash-loading-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  right: 0;
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: var(--color-bg-app);
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%);
   z-index: 9999;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 32px;
   text-align: center;
   padding: 24px;
   box-sizing: border-box;
-  transition: opacity 0.4s ease, visibility 0.4s ease;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 .splash-loading-overlay.fade-out {
@@ -122,13 +121,25 @@ body {
 /* Circular Logo Container with SVG Arc Spinner */
 .splash-logo-circle-wrapper {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 160px;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto;
   flex-shrink: 0;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.3));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 30px rgba(16, 185, 129, 0.5));
+  }
 }
 
 .splash-ring-svg {
@@ -140,45 +151,56 @@ body {
 }
 
 .splash-ring-bg {
-  stroke: #E2E8F0;
-  stroke-width: 4;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 6;
   fill: none;
 }
 
 .splash-ring-progress {
-  stroke: var(--color-accent);
-  stroke-width: 4.5;
+  stroke: #10B981;
+  stroke-width: 6;
   stroke-linecap: round;
   fill: none;
   stroke-dasharray: 314;
   stroke-dashoffset: 314;
-  transition: stroke-dashoffset 0.08s linear;
+  transition: stroke-dashoffset 0.1s linear;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6));
 }
 
 .splash-logo-badge {
-  width: 104px;
-  height: 104px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: #FFFFFF;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(16, 185, 129, 0.2);
   position: relative;
   z-index: 2;
   margin: auto;
 }
 
 .splash-logo-badge .brand-logo-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  animation: float-logo 3s ease-in-out infinite;
+}
+
+@keyframes float-logo {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 /* Horizontal Progress Track & Counter */
 .splash-progress-track-wrapper {
   width: 100%;
-  max-width: 240px;
+  max-width: 280px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -189,37 +211,87 @@ body {
 
 .splash-progress-track {
   width: 100%;
-  height: 8px;
-  background: #E2E8F0;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-pill);
   overflow: hidden;
   position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .splash-progress-fill {
   height: 100%;
   width: 0%;
-  background: var(--color-accent);
+  background: linear-gradient(90deg, #10B981 0%, #059669 100%);
   border-radius: var(--radius-pill);
-  transition: width 0.08s linear;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  position: relative;
+}
+
+.splash-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .splash-percent-label {
   font-family: var(--font-family);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text-secondary);
-  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-top: 20px;
   text-align: center;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .splash-status-text {
   font-family: var(--font-family);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-muted);
-  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 8px;
   text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.splash-brand-title {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.splash-brand-title h1 {
+  font-family: var(--font-family);
+  font-size: 32px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+  letter-spacing: -1px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.splash-brand-title p {
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  letter-spacing: 0.5px;
 }
 
 /* Layout Container (Max 480px, Centered on Desktop) */
@@ -555,7 +627,7 @@ body {
   padding: 16px;
 }
 
-/* Automated Sliding Banner Carousel Styling */
+/* Automated Sliding Banner Carousel Styling (Enhanced) */
 .banner-carousel {
   width: 100%;
   aspect-ratio: 16/9;
@@ -563,7 +635,7 @@ body {
   overflow: hidden;
   position: relative;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   border: 1px solid var(--color-border);
 }
 
@@ -571,7 +643,7 @@ body {
   display: flex;
   width: 300%;
   height: 100%;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .carousel-slide {
@@ -585,46 +657,63 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: brightness(1.02);
 }
 
 .carousel-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 30%, rgba(15, 23, 42, 0.88) 100%);
+  background: linear-gradient(180deg, transparent 40%, rgba(15, 23, 42, 0.92) 100%);
   display: flex;
   align-items: flex-end;
-  padding: 16px;
+  padding: 20px 16px;
   color: #FFFFFF;
 }
 
 .carousel-overlay h3 {
   font-family: var(--font-family);
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  margin-bottom: 4px;
+}
+
+.carousel-overlay p {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.95;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .carousel-dots {
   position: absolute;
-  bottom: 12px;
+  bottom: 16px;
   right: 16px;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   z-index: 15;
 }
 
 .carousel-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.35);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.carousel-dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(1.1);
 }
 
 .carousel-dot.active {
-  width: 20px;
-  border-radius: 10px;
   background: #FFFFFF;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  transform: scale(1.15);
 }
 
 /* Quick Action Grid (4 Columns) */
@@ -836,37 +925,64 @@ body {
 .bottom-nav-bar {
   position: relative;
   flex-shrink: 0;
-  height: 64px;
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+  min-height: 62px;
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
   display: flex;
   justify-content: space-around;
   align-items: center;
+  padding: 4px 0 calc(4px + env(safe-area-inset-bottom, 0px)) 0;
   z-index: 90;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .nav-tab-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
   background: transparent;
   border: none;
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 500;
+  color: #64748B;
   cursor: pointer;
   width: 20%;
-  transition: color 0.15s ease;
+  padding: 4px 0;
+  transition: color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.nav-tab-item span {
+  display: block !important;
+  font-family: var(--font-family);
+  font-size: 11px !important;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-top: 3px;
+  text-align: center;
+  color: inherit;
+  white-space: nowrap;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.nav-tab-item .svg-icon {
+  stroke: #64748B;
+  width: 22px;
+  height: 22px;
+  transition: stroke 0.15s ease, transform 0.15s ease;
 }
 
 .nav-tab-item.active {
-  color: var(--color-primary);
-  font-weight: 700;
+  color: #10B981;
+}
+
+.nav-tab-item.active span {
+  color: #10B981;
+  font-weight: 800;
 }
 
 .nav-tab-item.active .svg-icon {
-  stroke: var(--color-primary);
+  stroke: #10B981;
   transform: translateY(-1px);
 }
 
@@ -1811,6 +1927,34 @@ body {
   letter-spacing: 0.5px;
 }
 
+.bind-wallet-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.bind-wallet-card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bind-wallet-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bind-wallet-card-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+  letter-spacing: 0.3px;
+}
+
 /* Change Email Avatar */
 .large-avatar-circle {
   width: 100px;
@@ -2442,7 +2586,7 @@ body {
 
 /* Admin Bottom Navigation Bar (5 Items) */
 .admin-bottom-nav {
-  position: sticky;
+  position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
@@ -2732,6 +2876,58 @@ body {
   transform: translateY(1px);
 }
 
+/* Admin User Action Button Tooltips */
+.btn-user-act {
+  position: relative;
+}
+
+.btn-user-act::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1E293B;
+  color: #FFFFFF;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: max-content;
+}
+
+.btn-user-act::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1E293B;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.btn-user-act:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.btn-user-act:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
 .share-commission-banner {
   background: var(--color-surface-subtle);
   border-radius: var(--radius-md);
@@ -2955,3 +3151,249 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+/* ================= INCOME PAGE STYLING (ShambaVest Design System) ================= */
+.income-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 180px);
+  padding: 30px 20px;
+}
+
+.income-empty-watermark {
+  font-family: var(--font-family);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: #CBD5E1;
+  text-transform: uppercase;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.income-cards-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.income-product-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.income-product-card:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.income-card-img-wrapper {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #0F172A;
+  border: 1px solid var(--color-border);
+}
+
+.income-card-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.income-running-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #10B981;
+  color: #FFFFFF;
+  font-family: var(--font-family);
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-bottom-right-radius: 8px;
+  z-index: 2;
+  letter-spacing: 0.2px;
+}
+
+.income-plan-title-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.88) 100%);
+  color: #FFFFFF;
+  font-family: var(--font-family);
+  font-size: 13.5px;
+  font-weight: 800;
+  text-align: center;
+  padding: 10px 4px 6px 4px;
+  z-index: 2;
+}
+
+.income-card-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+}
+
+.income-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 13px;
+  font-family: var(--font-family);
+}
+
+.income-row-price {
+  border-bottom: 1px solid var(--color-surface-subtle);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+}
+
+.income-lbl {
+  color: #64748B;
+  font-weight: 600;
+}
+
+.income-val {
+  color: #0F172A;
+  font-weight: 700;
+  font-family: var(--font-family);
+}
+
+/* ================= WITHDRAW SCREEN STYLING (ShambaVest System) ================= */
+.withdraw-card-white {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+.withdraw-amount-input-box {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  gap: 10px;
+}
+
+.withdraw-currency-prefix {
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.withdraw-amount-field {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.withdraw-amount-field::placeholder {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.withdraw-bank-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.withdraw-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-surface-subtle);
+  font-size: 13px;
+  font-family: var(--font-family);
+}
+
+.withdraw-lbl {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.withdraw-val {
+  color: var(--color-text-main);
+  font-weight: 700;
+}
+
+.withdraw-rules-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 4px;
+}
+
+.withdraw-rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.withdraw-rule-diamond {
+  color: #2563EB;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.withdraw-status-badge {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.withdraw-status-badge.open {
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #059669;
+}
+
+.withdraw-status-badge.closed {
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #DC2626;
+}
+
+
+
+

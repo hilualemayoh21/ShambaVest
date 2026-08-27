@@ -24,20 +24,9 @@
       <button type="button" class="download-toast-action-btn" onclick="showApkDownloadDetails()">Details</button>
     </div>
 
-    <!-- App Launch Splash Loading Overlay (Matching Reference Screenshot) -->
+    <!-- App Launch Splash Loading Overlay (Enhanced Modern Design) -->
     <div id="appLoadingSplash" class="splash-loading-overlay">
       
-      <!-- Horizontal Progress Bar Track -->
-      <div class="splash-progress-track-wrapper">
-        <div class="splash-progress-track">
-          <div class="splash-progress-fill" id="splashProgressFill"></div>
-        </div>
-        
-        <!-- Live Percentage Label Counter & Elapsed Loading Time -->
-        <div class="splash-percent-label" id="splashPercentText">0%</div>
-        <div class="splash-status-text" id="splashStatusText">Loading portal... 0.0s</div>
-      </div>
-
       <!-- Circular Logo Badge & SVG Arc Ring -->
       <div class="splash-logo-circle-wrapper">
         <svg class="splash-ring-svg" viewBox="0 0 110 110">
@@ -58,10 +47,27 @@
         </div>
       </div>
 
+      <!-- Brand Title -->
+      <div class="splash-brand-title">
+        <h1>ShambaVest</h1>
+        <p>Agri-Wealth & Yield Investment Portal</p>
+      </div>
+      
+      <!-- Horizontal Progress Bar Track -->
+      <div class="splash-progress-track-wrapper">
+        <div class="splash-progress-track">
+          <div class="splash-progress-fill" id="splashProgressFill"></div>
+        </div>
+        
+        <!-- Live Percentage Label Counter & Elapsed Loading Time -->
+        <div class="splash-percent-label" id="splashPercentText">0%</div>
+        <div class="splash-status-text" id="splashStatusText">Loading portal... 0.0s</div>
+      </div>
+
     </div>
 
     <!-- Top Header Bar -->
-    <header class="top-header">
+    <header class="top-header" id="topHeader">
       <div class="brand-badge">
         
         <!-- ShambaVest Emblem (Sprouting Leaf + Financial Growth Chart Line) -->
@@ -116,6 +122,9 @@
             <div class="form-group">
               <label class="form-label" data-i18n="mobileLabel">Phone Number</label>
               <div class="input-box">
+                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </span>
                 <span class="country-divider">+251</span>
                 <input type="tel" id="regMobileInput" class="form-field-input" placeholder="Enter Phone Number" required>
               </div>
@@ -125,6 +134,9 @@
             <div class="form-group">
               <label class="form-label" data-i18n="passwordLabel">New Password</label>
               <div class="input-box">
+                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
                 <input type="password" id="regPassInput" class="form-field-input" placeholder="Please new password" required>
                 <button type="button" class="btn-eye-toggle" onclick="togglePassVisibility('regPassInput')">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -136,6 +148,9 @@
             <div class="form-group">
               <label class="form-label" data-i18n="confirmPasswordLabel">Confirm Password</label>
               <div class="input-box">
+                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
                 <input type="password" id="regConfirmPassInput" class="form-field-input" placeholder="Please new password again" required>
                 <button type="button" class="btn-eye-toggle" onclick="togglePassVisibility('regConfirmPassInput')">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -174,6 +189,9 @@
             <div class="form-group">
               <label class="form-label" data-i18n="mobileLabel">Phone Number</label>
               <div class="input-box">
+                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </span>
                 <span class="country-divider">+251</span>
                 <input type="tel" id="loginMobileInput" class="form-field-input" placeholder="Enter Phone Number" required>
               </div>
@@ -183,6 +201,9 @@
             <div class="form-group">
               <label class="form-label" data-i18n="passwordLabel">Password</label>
               <div class="input-box">
+                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
                 <input type="password" id="loginPassInput" class="form-field-input" placeholder="Enter your password" required>
                 <button type="button" class="btn-eye-toggle" onclick="togglePassVisibility('loginPassInput')">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -190,8 +211,12 @@
               </div>
             </div>
 
-            <div style="font-size: 12px; color: var(--color-accent); margin-bottom: 18px; font-weight: 600;">
-              ✓ Registered credentials are auto-saved for quick access.
+            <!-- Contact Person Section -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px; padding: 12px; background: #F1F5F9; border-radius: 8px;">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="color: var(--color-accent);">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <span style="font-size: 13px; color: var(--color-text-main); font-weight: 600;">Contact Support: +251 911 234 567</span>
             </div>
 
             <!-- Submit Login Button -->
@@ -680,33 +705,94 @@
 
       </section>
 
-      <!-- ================= D. INCOME VIEW ================= -->
-      <section id="incomeView" class="dashboard-padding" style="display: none;">
-        <div class="balance-info-card">
-          <div class="balance-info-title">Available Balance</div>
-          <div class="balance-info-val" id="incomeBalance">Br 0.00</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;">
-            <button class="btn-primary-action" style="padding:10px;" onclick="openRechargeScreen()">Recharge</button>
-            <button class="btn-secondary-action" style="padding:10px;" onclick="openWithdrawModal()">Withdraw</button>
-          </div>
+      <!-- ================= C2. WITHDRAW SCREEN ================= -->
+      <section id="withdrawView" style="display: none; background: var(--color-bg-app); min-height: 100vh;">
+        
+        <!-- Header Bar with Back Button -->
+        <div class="subpage-green-header" style="position: sticky; top: 0; z-index: 20;">
+          <button type="button" class="btn-subpage-back" onclick="switchTab('home')">
+            <svg class="svg-icon" viewBox="0 0 24 24" style="stroke:#FFFFFF;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+          <div class="subpage-header-title">Withdraw</div>
         </div>
 
-        <div class="balance-info-card">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <div class="balance-info-title">Accumulated Yield</div>
-              <div style="font-family: var(--font-family); font-size: 22px; font-weight: 800; color: var(--color-accent);" id="incomeAccumulatedYield">
-                Br 0.00
+        <div style="padding: 16px; padding-bottom: 90px; display: flex; flex-direction: column; gap: 14px;">
+          
+          <!-- Status Badge for Ethiopian Local Time Withdrawal Window -->
+          <div id="withdrawHoursStatusBadge" class="withdraw-status-badge"></div>
+
+          <!-- Card 1: Amount Input Box -->
+          <div class="withdraw-card-white">
+            <div style="font-size: 13px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 8px;">Amount</div>
+            <div class="withdraw-amount-input-box">
+              <span class="withdraw-currency-prefix">Br</span>
+              <input type="number" id="withdrawAmountInput" class="withdraw-amount-field" placeholder="Enter Amount" oninput="updateWithdrawButtonText()">
+            </div>
+            <div style="font-size: 13px; color: var(--color-text-muted); margin-top: 8px; font-weight: 500;">
+              Balance: <span id="withdrawBalanceVal" style="color: var(--color-text-main); font-weight: 700;">Br 0.00</span>
+            </div>
+            
+            <button type="button" class="btn-primary-action" id="btnSubmitWithdraw" style="margin-top: 14px; background: #10B981;" onclick="submitWithdrawalScreen()">
+              Withdraw Br 0
+            </button>
+          </div>
+
+          <!-- Card 2: Bound Bank Card Details -->
+          <div class="withdraw-card-white">
+            <div class="withdraw-bank-details-grid">
+              <div class="withdraw-detail-row">
+                <span class="withdraw-lbl">Real Name</span>
+                <span class="withdraw-val" id="withdrawRealNameVal">Nobel</span>
+              </div>
+              <div class="withdraw-detail-row">
+                <span class="withdraw-lbl">Bank</span>
+                <span class="withdraw-val" id="withdrawBankNameVal">Commercial Bank of Ethiopia</span>
+              </div>
+              <div class="withdraw-detail-row" style="border-bottom: none;">
+                <span class="withdraw-lbl">Bank Account Number</span>
+                <span class="withdraw-val" id="withdrawAccountNumVal">1000736684318</span>
               </div>
             </div>
-            <button class="btn-primary-action" style="width:auto; padding:8px 16px; font-size:13px;" onclick="claimDailyYield()">Claim Yield</button>
+
+            <button type="button" class="btn-secondary-action" style="margin-top: 12px; color: #059669; border-color: #A7F3D0; background: #ECFDF5;" onclick="openSubpage('bindWallet')">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #059669;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Bind Bank Card
+            </button>
           </div>
+
+          <!-- Card 3: Rules and Guidelines List -->
+          <div class="withdraw-rules-container">
+            <div class="withdraw-rule-item">
+              <span class="withdraw-rule-diamond">◆</span>
+              <span>Product settlement time: 00:01 daily (Ethiopian official time).</span>
+            </div>
+            <div class="withdraw-rule-item">
+              <span class="withdraw-rule-diamond">◆</span>
+              <span>Withdrawal Hours: 09:00 AM – 05:00 PM (Ethiopia local time)</span>
+            </div>
+            <div class="withdraw-rule-item">
+              <span class="withdraw-rule-diamond">◆</span>
+              <span>Processing Time: Funds will be credited within 24 hours</span>
+            </div>
+            <div class="withdraw-rule-item">
+              <span class="withdraw-rule-diamond">◆</span>
+              <span>Minimum Withdrawal Amount: Br 200</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= D. INCOME VIEW ================= -->
+      <section id="incomeView" style="display: none; background: var(--color-bg-app); min-height: 100vh;">
+        <!-- Top Green Header Bar (Matching ShambaVest Header) -->
+        <div class="subpage-green-header" style="justify-content: center; position: sticky; top: 0; z-index: 20;">
+          <div class="subpage-header-title" style="text-align: center; flex: unset;">Income</div>
         </div>
 
-        <div style="font-family: var(--font-family); font-size: 16px; font-weight: 700; margin-bottom: 12px;">
-          My Active Products
+        <div id="incomeViewContainer" style="padding-bottom: 90px;">
+          <!-- Dynamically populated via JS: Empty "NO DATA" state or Purchased Product cards -->
         </div>
-        <div id="activeProductsContainer"></div>
       </section>
 
       <!-- ================= E. TEAM VIEW ================= -->
@@ -823,6 +909,53 @@
       <!-- ================= G. MY PROFILE VIEW ================= -->
       <section id="profileView" style="display: none; padding-bottom: 24px;">
         
+        <!-- Automated Sliding Banner Carousel -->
+        <div class="banner-carousel" id="profileCarousel">
+          <div class="carousel-track" id="profileCarouselTrack">
+            
+            <!-- Slide 1 -->
+            <div class="carousel-slide">
+              <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800" alt="ShambaVest B2B Market" class="carousel-slide-img">
+              <div class="carousel-overlay">
+                <div>
+                  <h3>ShambaVest B2B Market</h3>
+                  <p style="font-size:12px; color:#94A3B8;">US$180M+ Commercial Supply Chain & Expansion</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="carousel-slide">
+              <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800" alt="Direct Commercial Farm Sourcing" class="carousel-slide-img">
+              <div class="carousel-overlay">
+                <div>
+                  <h3>Direct Commercial Farm Sourcing</h3>
+                  <p style="font-size:12px; color:#94A3B8;">Partnered with 10,000+ Verified Commercial Growers</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="carousel-slide">
+              <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800" alt="Smart Distribution Logistics" class="carousel-slide-img">
+              <div class="carousel-overlay">
+                <div>
+                  <h3>Smart Distribution Logistics</h3>
+                  <p style="font-size:12px; color:#94A3B8;">Verified Produce Returns & Enterprise Growth</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Carousel Pagination Dots Overlay -->
+          <div class="carousel-dots" id="profileCarouselDots">
+            <div class="carousel-dot active" onclick="goToProfileCarouselSlide(0)"></div>
+            <div class="carousel-dot" onclick="goToProfileCarouselSlide(1)"></div>
+            <div class="carousel-dot" onclick="goToProfileCarouselSlide(2)"></div>
+          </div>
+        </div>
+        
         <!-- Profile Header Card (Image 2) -->
         <div class="profile-header-card">
           <div class="profile-avatar-wrapper">
@@ -923,6 +1056,14 @@
               <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
             <span class="menu-tile-label">Language</span>
+          </button>
+
+          <!-- 9. Logout -->
+          <button type="button" class="menu-tile-btn" onclick="handleLogout()">
+            <div class="menu-tile-icon" style="color: #EF4444;">
+              <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24" style="stroke: #EF4444; fill: none;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
+            <span class="menu-tile-label" style="color: #EF4444;">Logout</span>
           </button>
 
         </div>
@@ -1219,34 +1360,47 @@
       <!-- ================= M. BIND WALLET SUBPAGE ================= -->
       <section id="bindWalletView" style="display: none; background: #FFFFFF; min-height: 100%;">
         <div class="subpage-green-header">
-          <button type="button" class="btn-subpage-back" onclick="openSubpage('personalInfo')">
+          <button type="button" class="btn-subpage-back" onclick="openSubpage('withdraw')">
             <svg class="svg-icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           </button>
-          <div class="subpage-header-title">Bind Wallet Address</div>
+          <div class="subpage-header-title">Bind Bank Card</div>
         </div>
 
         <div class="bind-wallet-card-black">
           <div class="bind-wallet-chip"></div>
-          <div class="bind-wallet-card-text">Real Name :</div>
+          <div class="bind-wallet-card-info">
+            <div class="bind-wallet-card-row">
+              <span class="bind-wallet-card-label">Real Name:</span>
+              <span class="bind-wallet-card-value" id="bindWalletCardName">Nobel</span>
+            </div>
+            <div class="bind-wallet-card-row">
+              <span class="bind-wallet-card-label">Bank:</span>
+              <span class="bind-wallet-card-value" id="bindWalletCardBank">Commercial Bank of Ethiopia</span>
+            </div>
+            <div class="bind-wallet-card-row">
+              <span class="bind-wallet-card-label">Account:</span>
+              <span class="bind-wallet-card-value" id="bindWalletCardAccount">1000736684318</span>
+            </div>
+          </div>
         </div>
 
         <div style="padding: 0 16px;">
           <fieldset class="green-fieldset">
             <legend>Real Name</legend>
-            <input type="text" class="green-fieldset-input" placeholder="Enter real name">
+            <input type="text" id="bindRealNameInput" class="green-fieldset-input" placeholder="Enter real name" value="Nobel">
           </fieldset>
 
           <fieldset class="green-fieldset">
             <legend>Bank</legend>
-            <input type="text" class="green-fieldset-input" value="Commercial Bank of Ethiopia">
+            <input type="text" id="bindBankInput" class="green-fieldset-input" value="Commercial Bank of Ethiopia" placeholder="Enter Bank Name (e.g. CBE or Telebirr)">
           </fieldset>
 
           <fieldset class="green-fieldset">
             <legend>Bank Account Number</legend>
-            <input type="text" class="green-fieldset-input" placeholder="Enter Bank Account Number">
+            <input type="text" id="bindAcNumInput" class="green-fieldset-input" value="1000736684318" placeholder="Enter Bank Account Number">
           </fieldset>
 
-          <button type="button" class="btn-primary-action" style="margin-top: 10px;" onclick="openSubpage('personalInfo')">
+          <button type="button" class="btn-primary-action" style="margin-top: 10px;" onclick="saveBindWallet()">
             Confirm
           </button>
         </div>
@@ -1318,9 +1472,14 @@
             </div>
           </div>
 
-          <button type="button" class="btn-exit-admin" onclick="exitAdminPortal()">
-            Exit Admin
-          </button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-exit-admin" style="background: #3B82F6;" onclick="adminChangePassword()">
+              Change Password
+            </button>
+            <button type="button" class="btn-exit-admin" onclick="exitAdminPortal()">
+              Exit Admin
+            </button>
+          </div>
         </div>
 
         <!-- 1. Admin Dashboard Subview (Matching Screenshots 2 & 3) -->
@@ -1588,7 +1747,68 @@
     </div>
   </div>
 
-  <!-- 3. Simple Purchase Confirmation Modal -->
+  <!-- 3. Admin Password Modal -->
+  <div class="modal-overlay" id="adminPasswordModal">
+    <div class="modal-dialog-white">
+      <div class="purchase-dialog-padding">
+        <div class="announce-title">Admin Access</div>
+        <div class="announce-subtitle-red">Enter Admin Password</div>
+        
+        <div style="margin-top: 20px;">
+          <input type="password" id="adminPasswordInput" class="green-fieldset-input" 
+                 placeholder="Enter admin password" 
+                 style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px;">
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-primary-action" style="flex: 1; background: #EF4444;" onclick="closeAdminPasswordModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn-primary-action" style="flex: 1;" onclick="submitAdminPassword()">
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Admin Change Password Modal -->
+  <div class="modal-overlay" id="adminChangePasswordModal">
+    <div class="modal-dialog-white">
+      <div class="purchase-dialog-padding">
+        <div class="announce-title">Change Admin Password</div>
+        <div class="announce-subtitle-red">Update your admin password</div>
+        
+        <div style="margin-top: 20px;">
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #64748B; margin-bottom: 6px;">Current Password</label>
+          <input type="password" id="currentPasswordInput" class="green-fieldset-input" 
+                 placeholder="Enter current password" 
+                 style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; margin-bottom: 12px;">
+          
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #64748B; margin-bottom: 6px;">New Password</label>
+          <input type="password" id="newPasswordInput" class="green-fieldset-input" 
+                 placeholder="Enter new password (min 4 characters)" 
+                 style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; margin-bottom: 12px;">
+          
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #64748B; margin-bottom: 6px;">Confirm New Password</label>
+          <input type="password" id="confirmPasswordInput" class="green-fieldset-input" 
+                 placeholder="Confirm new password" 
+                 style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px;">
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-primary-action" style="flex: 1; background: #EF4444;" onclick="closeAdminChangePasswordModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn-primary-action" style="flex: 1;" onclick="submitAdminChangePassword()">
+            Change Password
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Simple Purchase Confirmation Modal -->
   <div class="modal-overlay" id="purchaseModal">
     <div class="modal-dialog-white">
       <div class="purchase-dialog-padding">
@@ -1657,6 +1877,16 @@
     </div>
   </div>
 
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <!-- Firebase Realtime Database -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- SweetAlert2 (from Image 1/2 UI references) -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Chart.js (for potential charts) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <script src="app.js"></script>
 </body>
 </html>

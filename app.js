@@ -61,9 +61,111 @@ const translations = {
   }
 };
 
+// Firebase Initialization - New Project Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBs8ObQU_-2Mpo_61i_CPM1XwXkZeJMxw8",
+  authDomain: "shambavest-new.firebaseapp.com",
+  databaseURL: "https://shambavest-new-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "shambavest-new",
+  storageBucket: "shambavest-new.firebasestorage.app",
+  messagingSenderId: "66680195408",
+  appId: "1:66680195408:web:8e319ecab8b90419988455"
+};
+
+let db = null;
+let firebaseInitError = null;
+
+if (typeof firebase !== 'undefined') {
+  try {
+    // Clear any existing Firebase apps to force reinitialization
+    if (firebase.apps.length > 0) {
+      console.log('Clearing existing Firebase app instance');
+      firebase.apps.forEach(app => app.delete());
+    }
+    
+    console.log('Initializing Firebase with new project:', firebaseConfig.projectId);
+    console.log('Firebase database URL:', firebaseConfig.databaseURL);
+    firebase.initializeApp(firebaseConfig);
+    console.log('Firebase initialized successfully');
+    
+    db = firebase.database();
+    console.log('Firebase database connected');
+    
+    // Test Firebase connection
+    testFirebaseConnection();
+  } catch (error) {
+    firebaseInitError = error;
+    console.error('Firebase initialization error:', error);
+    showToast('Firebase connection failed. Using local storage only.', true);
+  }
+} else {
+  firebaseInitError = 'Firebase SDK not loaded';
+  console.error('Firebase SDK not loaded - check CDN scripts');
+  showToast('Firebase not available. Using local storage only.', true);
+}
+
+// Simple Firebase connection test
+async function testFirebaseConnection() {
+  if (!db) {
+    console.log('Firebase db is null, skipping test');
+    return;
+  }
+  
+  try {
+    console.log('=== Starting Firebase Connection Test ===');
+    console.log('Testing Firebase connection with simple read...');
+    
+    const testRef = db.ref('.info/connected');
+    const snapshot = await testRef.once('value');
+    console.log('Firebase connection test result:', snapshot.val());
+    
+    if (snapshot.val() === false) {
+      console.warn('Firebase reports not connected - database may not exist or have permission issues');
+      console.log('Attempting alternative connection test...');
+      
+      // Try to read from the actual database path
+      const altTestRef = db.ref('shambavest_state');
+      try {
+        const altSnapshot = await altTestRef.once('value');
+        console.log('Alternative test successful - data exists:', altSnapshot.exists());
+      } catch (altError) {
+        console.error('Alternative test failed:', altError.message);
+        console.error('This suggests the Firebase database may not exist or has restrictive rules');
+      }
+      return;
+    }
+    
+    // Test write operation
+    console.log('Testing Firebase write operation...');
+    const testWriteRef = db.ref('test_connection');
+    await testWriteRef.set({ timestamp: Date.now(), status: 'working', project: 'shambavest-new' });
+    console.log('Firebase write test successful');
+    
+    // Test read operation
+    console.log('Testing Firebase read operation...');
+    const readSnapshot = await testWriteRef.once('value');
+    console.log('Firebase read test result:', readSnapshot.val());
+    
+    console.log('✓ Firebase connection is working properly');
+    console.log('=== Firebase Connection Test Completed ===');
+  } catch (error) {
+    console.error('✗ Firebase connection test failed:', error);
+    console.error('Error details:', error.message, error.code);
+    console.log('=== Firebase Connection Test Failed ===');
+  }
+}
+
+// Call the test after a short delay to ensure Firebase is ready
+setTimeout(() => {
+  console.log('Running delayed Firebase connection test...');
+  testFirebaseConnection();
+}, 2000);
+
+
 // Global State Handler
 class AppState {
   constructor() {
+    this._isApplyingFirebaseUpdate = false;
     this.currentLang = localStorage.getItem('twiga_lang') || 'en';
     this.activeTab = 'auth'; // auth, home, recharge, income, team, share, profile
     this.authMode = 'register'; // login or register
@@ -90,6 +192,7 @@ class AppState {
     // Admin State & Queues (Matching Screenshots 1-5)
     this.isAdminMode = false;
     this.adminActiveTab = 'deposit';
+    this.adminPassword = localStorage.getItem('twiga_admin_password') || 'admin123';
 
     if (!localStorage.getItem('twiga_admin_wiped_v1')) {
       localStorage.removeItem('twiga_admin_deposits');
@@ -106,6 +209,9 @@ class AppState {
 
     const savedAdminUsers = JSON.parse(localStorage.getItem('twiga_admin_users_list') || 'null');
     this.adminUsersList = savedAdminUsers || [];
+    
+    // Sync adminUsersList with registeredUsers from Firebase
+    this.syncAdminUsersListFromRegisteredUsers();
 
     if (!localStorage.getItem('twiga_admin_vip_v3')) {
       localStorage.removeItem('twiga_admin_vip_plans');
@@ -136,6 +242,49 @@ class AppState {
     localStorage.setItem('twiga_admin_withdrawals', JSON.stringify(this.adminWithdrawals));
     localStorage.setItem('twiga_admin_users_list', JSON.stringify(this.adminUsersList));
     localStorage.setItem('twiga_admin_vip_plans', JSON.stringify(this.adminVipPlans));
+    localStorage.setItem('twiga_admin_password', this.adminPassword);
+
+    if (db && !this._isApplyingFirebaseUpdate) {
+      db.ref('shambavest_state').set({
+        registeredUsers: this.registeredUsers,
+        adminDeposits: this.adminDeposits,
+        adminWithdrawals: this.adminWithdrawals,
+        adminUsersList: this.adminUsersList,
+        adminVipPlans: this.adminVipPlans,
+        adminPassword: this.adminPassword
+      });
+    }
+  }
+
+  saveLocalOnly() {
+    this._isApplyingFirebaseUpdate = true;
+    this.save();
+    this._isApplyingFirebaseUpdate = false;
+  }
+
+  syncAdminUsersListFromRegisteredUsers() {
+    // Rebuild adminUsersList from registeredUsers to ensure only real users are shown
+    this.adminUsersList = [];
+    
+    for (const phone in this.registeredUsers) {
+      const user = this.registeredUsers[phone];
+      const joinedStr = user.registeredAt ? user.registeredAt.replace('T', ' ').substring(0, 19) : new Date().toISOString().replace('T', ' ').substring(0, 19);
+      
+      this.adminUsersList.push({
+        phone: user.mobile,
+        balance: `${user.balance.toFixed(2)} ETB`,
+        rawBalance: user.balance,
+        role: 'User',
+        bank: 'N/A',
+        ac: 'N/A',
+        joined: joinedStr
+      });
+    }
+    
+    // Sort by joined date (newest first)
+    this.adminUsersList.sort((a, b) => new Date(b.joined) - new Date(a.joined));
+    
+    console.log(`Synced adminUsersList with ${this.adminUsersList.length} real users from registeredUsers`);
   }
 
   t(key) {
@@ -154,6 +303,52 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAutoFillLogin();
   initHeroCarousel();
   checkAdminUrlTrigger();
+  initializeDailyIncomeSystem();
+
+  // Attach Firebase Listener for realtime sync
+  if (db) {
+    db.ref('shambavest_state').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        console.log('Firebase realtime sync received data');
+        
+        if (data.registeredUsers) {
+          state.registeredUsers = data.registeredUsers;
+          // Sync adminUsersList from real registeredUsers
+          state.syncAdminUsersListFromRegisteredUsers();
+        }
+        if (data.adminDeposits) state.adminDeposits = data.adminDeposits;
+        if (data.adminWithdrawals) state.adminWithdrawals = data.adminWithdrawals;
+        if (data.adminVipPlans) state.adminVipPlans = data.adminVipPlans;
+        if (data.adminPassword) {
+          state.adminPassword = data.adminPassword;
+          localStorage.setItem('twiga_admin_password', data.adminPassword);
+          console.log('Admin password synced from Firebase');
+        }
+
+        // Sync current session memory if logged in
+        if (state.currentUser && state.registeredUsers[state.currentUser.mobile]) {
+          state.currentUser = state.registeredUsers[state.currentUser.mobile];
+        }
+
+        state.saveLocalOnly();
+        
+        // Re-render UI depending on active tab
+        if (state.isAdminMode) {
+          if (typeof renderAdminUsersList === 'function') renderAdminUsersList();
+          if (typeof renderAdminDeposits === 'function') renderAdminDeposits();
+          if (typeof renderAdminWithdrawals === 'function') renderAdminWithdrawals();
+          if (typeof updateAdminDashboardStats === 'function') updateAdminDashboardStats();
+        } else {
+          // Re-render views if they are open
+          if (state.activeTab === 'home') renderHomeView();
+          if (state.activeTab === 'income') renderIncomeView();
+          if (state.activeTab === 'team') renderTeamView();
+          if (state.activeTab === 'profile') renderProfileView();
+        }
+      }
+    });
+  }
 });
 
 // Secret Admin Access via URL or Keyboard Shortcut (Ctrl+Shift+A)
@@ -245,14 +440,17 @@ function runAppLoadingSequence(totalDurationMs = 3000) {
   }
 }
 
-// Toast Manager
-function showToast(message, isError = false, duration = 3500) {
+// Toast Manager (Single Toast Instance - Prevents Overlay Stacking)
+function showToast(message, isError = false, duration = 2500) {
   let container = document.querySelector('.toast-container');
   if (!container) {
     container = document.createElement('div');
     container.className = 'toast-container';
     document.body.appendChild(container);
   }
+
+  // Clear any existing toasts so notifications never stack up over the UI
+  container.innerHTML = '';
 
   const toast = document.createElement('div');
   toast.className = `toast ${isError ? 'toast-error' : ''}`;
@@ -261,8 +459,9 @@ function showToast(message, isError = false, duration = 3500) {
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transition = 'opacity 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
+    toast.style.transform = 'translateY(-10px)';
+    toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+    setTimeout(() => toast.remove(), 250);
   }, duration);
 }
 
@@ -319,6 +518,24 @@ function togglePassVisibility(inputId) {
   }
 }
 
+// Logout Handler
+window.handleLogout = function() {
+  if (!confirm('Are you sure you want to logout?')) return;
+  
+  // Clear current user session
+  state.currentUser = null;
+  state.save();
+  
+  // Switch to auth tab
+  switchTab('auth');
+  
+  // Clear any stored login credentials
+  localStorage.removeItem('shambavest_remembered_phone');
+  localStorage.removeItem('shambavest_remembered_pass');
+  
+  showToast('👋 You have been logged out successfully!');
+}
+
 // Event Listeners Setup
 function setupEventListeners() {
   // Auth Mode Switcher (Login vs Register)
@@ -337,29 +554,75 @@ function setupEventListeners() {
   // Registration Form Submission (Unique Phone Check & Auto-Fill Login)
   const regForm = document.getElementById('regForm');
   if (regForm) {
-    regForm.addEventListener('submit', (e) => {
+    regForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      console.log('=== Registration Started ===');
+      
       const mobileVal = document.getElementById('regMobileInput').value.trim();
       const passVal = document.getElementById('regPassInput').value;
       const confirmPassVal = document.getElementById('regConfirmPassInput').value;
       const inviteVal = document.getElementById('regInviteCodeInput').value.trim() || '150bc0d8';
 
+      console.log('Registration data:', { mobileVal, hasPassword: !!passVal, hasConfirmPassword: !!confirmPassVal, inviteVal });
+
       if (!mobileVal || !passVal || !confirmPassVal) {
+        console.error('Validation failed: Missing required fields');
         showToast('Please fill in all required registration fields!', true);
         return;
       }
 
       if (passVal !== confirmPassVal) {
+        console.error('Validation failed: Passwords do not match');
         showToast('Passwords do not match! Please check again.', true);
         return;
       }
 
-      // Check if user with phone number already exists
       const fullMobile = `+251${mobileVal}`;
+      console.log('Firebase DB status:', db ? 'Connected' : 'Not connected (using localStorage)');
+      console.log('Firebase init error:', firebaseInitError);
+
+      // Check global uniqueness on Firebase with new project
+      let firebaseUserExists = false;
+      let firebaseCheckSuccess = false;
+      
+      if (db) {
+        try {
+          console.log('Checking Firebase for existing user:', mobileVal);
+          console.log('Using Firebase project:', firebaseConfig.projectId);
+          
+          // Direct user check with 3-second timeout
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Firebase check timeout after 3s')), 3000);
+          });
+          
+          const firebasePromise = db.ref(`shambavest_state/registeredUsers/${mobileVal}`).once('value');
+          const snap = await Promise.race([firebasePromise, timeoutPromise]);
+          
+          console.log('Firebase check result:', snap.exists() ? 'User exists' : 'User does not exist');
+          firebaseCheckSuccess = true;
+          
+          if (snap.exists()) {
+            firebaseUserExists = true;
+            showToast('Phone number already exists on this platform!', true);
+            return;
+          }
+        } catch (err) {
+          console.error('Firebase DB Check Error:', err.message);
+          firebaseCheckSuccess = false;
+          console.log('Firebase check failed, using localStorage only');
+        }
+      } else {
+        console.log('Firebase not available, using localStorage only');
+      }
+      
+      // Always run localStorage check as backup
+      console.log('Using localStorage check for existing user');
       if (state.registeredUsers[mobileVal] || state.registeredUsers[fullMobile]) {
-        showToast('Phone number already exists', true);
+        showToast('Phone number already exists locally', true);
         return;
       }
+      
+      console.log('Firebase check completed, success:', firebaseCheckSuccess);
 
       // Find referrers up to 3 levels deep based on inviteVal
       let l1ReferrerPhone = null;
@@ -367,12 +630,14 @@ function setupEventListeners() {
       let l3ReferrerPhone = null;
 
       if (inviteVal) {
+        console.log('Searching for referrer with code:', inviteVal);
         for (let uPhone in state.registeredUsers) {
           const u = state.registeredUsers[uPhone];
           if (u.inviteCode === inviteVal || u.referralCode === inviteVal) {
             l1ReferrerPhone = u.mobile;
             l2ReferrerPhone = u.level1Referrer || null;
             l3ReferrerPhone = u.level2Referrer || null;
+            console.log('Found referrer:', l1ReferrerPhone);
             break;
           }
         }
@@ -380,6 +645,8 @@ function setupEventListeners() {
 
       // Create new user object
       const userUniqueCode = generateUniqueCodeForPhone(mobileVal);
+      console.log('Generated unique code:', userUniqueCode);
+      
       const newUser = {
         mobile: mobileVal,
         fullMobile: fullMobile,
@@ -399,30 +666,28 @@ function setupEventListeners() {
         history: []
       };
 
+      console.log('New user object created:', newUser);
+
       // Save user to directory
       state.registeredUsers[mobileVal] = newUser;
+      console.log('User saved to registeredUsers');
       
-      // REAL-TIME ADMIN SYNC: Push new user to Admin Users List!
-      const joinedStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      state.adminUsersList.unshift({
-        phone: mobileVal,
-        balance: '0.00 ETB',
-        rawBalance: 0.00,
-        role: 'User',
-        bank: 'N/A',
-        ac: 'N/A',
-        joined: joinedStr
-      });
+      // Sync adminUsersList from registeredUsers to ensure only real users are shown
+      state.syncAdminUsersListFromRegisteredUsers();
+      console.log('Admin users list synced from registered users');
 
       // Save draft user for auto-fill on login form
       state.draftUser = { mobile: mobileVal, password: passVal };
+      console.log('Saving state to localStorage and Firebase...');
       state.save();
+      console.log('State saved successfully');
 
       showToast('Registration successful! Phone number and password auto-filled below. Click Login to enter.');
 
       // Switch to Login Mode & Auto-fill inputs
       setAuthMode('login');
       checkAutoFillLogin();
+      console.log('=== Registration Completed Successfully ===');
     });
   }
 
@@ -455,6 +720,9 @@ function setupEventListeners() {
       state.currentUser = existingUser;
       state.activeTab = 'home';
       state.save();
+
+      // Recalculate total income on login to ensure accuracy
+      recalculateTotalIncome(existingUser);
 
       renderAppView();
       showToast(`Welcome back, +251 ${mobileVal}!`);
@@ -570,7 +838,7 @@ function renderAppView() {
   });
 
   const views = [
-    'authView', 'homeView', 'rechargeView', 'incomeView', 
+    'authView', 'homeView', 'rechargeView', 'withdrawView', 'incomeView', 
     'teamView', 'shareView', 'profileView',
     'balanceDetailsView', 'rechargeRecordsView', 'withdrawalRecordsView',
     'personalInfoView', 'changeEmailView', 'messagesView', 'bindWalletView', 'changePasswordView',
@@ -592,24 +860,39 @@ function renderAppView() {
     }
   }
 
+  // Hide top navbar on home and profile pages
+  const topHeader = document.getElementById('topHeader');
+  if (topHeader) {
+    if (state.activeTab === 'home' || state.activeTab === 'profile') {
+      topHeader.style.display = 'none';
+    } else {
+      topHeader.style.display = 'flex';
+    }
+  }
+
   const mainContent = document.querySelector('.main-content');
   if (mainContent) mainContent.scrollTop = 0;
 
   if (state.activeTab === 'home') {
     updateCarouselPosition();
     renderVipButtons();
-    if (!window.hasShownHomeModal) {
-      setTimeout(() => openModal('homeAnnouncementModal'), 500);
-      window.hasShownHomeModal = true;
-    }
+    // Show announcement modal every time user visits home page
+    setTimeout(() => openModal('homeAnnouncementModal'), 500);
   }
   if (state.activeTab === 'recharge') renderRechargeView();
+  if (state.activeTab === 'withdraw') renderWithdrawView();
   if (state.activeTab === 'income') renderIncomeView();
   if (state.activeTab === 'team') renderTeamView();
   if (state.activeTab === 'share') renderShareView();
-  if (state.activeTab === 'profile') renderProfileView();
+  if (state.activeTab === 'profile') {
+    renderProfileView();
+    updateProfileCarouselPosition();
+    startProfileCarousel();
+  }
   if (state.activeTab === 'balanceDetails') renderBalanceDetailsView();
   if (state.activeTab === 'rechargeRecords') renderRechargeRecordsView();
+  if (state.activeTab === 'withdrawalRecords') renderWithdrawalRecordsView();
+  if (state.activeTab === 'bindWallet') renderBindWalletView();
   if (state.activeTab === 'withdrawalRecords') renderWithdrawalRecordsView();
 }
 
@@ -672,8 +955,12 @@ function renderVipButtons() {
       btn.style.color = '#FFFFFF';
       btn.style.cursor = 'pointer';
       btn.innerHTML = `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Buy now`;
+      
+      const cardImg = card ? card.querySelector('img') : null;
+      const imgSrc = cardImg ? cardImg.getAttribute('src') : getPlanImage(planState.name || btn.dataset.planName);
+
       btn.onclick = () => openPurchaseModal(
-        btn.dataset.planName, priceNum, totalNum, dailyNum, daysNum
+        planState.name || btn.dataset.planName, priceNum, totalNum, dailyNum, daysNum, imgSrc
       );
     } else {
       btn.style.background = '#94a3b8';
@@ -829,40 +1116,86 @@ function submitGatewayPayment() {
   switchTab('home');
 }
 
-// Render Income View Details
+// Helper for fallback product images
+function getPlanImage(name) {
+  if (!name) return 'plan_b.png';
+  const n = name.toLowerCase();
+  if (n.includes('plan b') || n.includes('vip ii') || n.includes('vip 2')) return 'plan_b.png';
+  if (n.includes('tomatoes') || n.includes('vip i') || n.includes('vip 1')) return 'plan_a.png';
+  if (n.includes('vip iii') || n.includes('vip 3')) return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500';
+  if (n.includes('vip iv') || n.includes('vip 4')) return 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500';
+  if (n.includes('vip v') || n.includes('vip 5')) return 'plan_e.png';
+  if (n.includes('vip vi') || n.includes('vip 6')) return 'plan_f.png';
+  if (n.includes('vip vii') || n.includes('vip 7')) return 'plan_g.png';
+  if (n.includes('vip viii') || n.includes('vip 8')) return 'plan_h.png';
+  if (n.includes('vip ix') || n.includes('vip 9')) return 'plan_j.png';
+  if (n.includes('vip x') || n.includes('vip 10')) return 'plan_k.png';
+  return 'plan_b.png';
+}
+
+// Render Income View Details (Exact Home Page Card Layout)
 function renderIncomeView() {
   if (!state.currentUser) return;
   const user = state.currentUser;
+  const container = document.getElementById('incomeViewContainer');
 
-  const incomeBal = document.getElementById('incomeBalance');
-  const yieldEl = document.getElementById('incomeAccumulatedYield');
-  const container = document.getElementById('activeProductsContainer');
+  if (!container) return;
 
-  if (incomeBal) incomeBal.innerText = `Br ${user.balance.toFixed(2)}`;
-  if (yieldEl) yieldEl.innerText = `Br ${user.accumulatedYield.toFixed(2)}`;
+  if (!user.activePlans || user.activePlans.length === 0) {
+    container.innerHTML = `
+      <div class="income-empty-state">
+        <div class="income-empty-watermark">NO DATA</div>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="income-cards-list" style="padding: 16px;">
+        ${user.activePlans.map(plan => {
+          const imgUrl = plan.image || getPlanImage(plan.name);
+          const priceNum = parseNum(plan.price);
+          const dailyNum = parseNum(plan.daily);
+          const dayNum = parseNum(plan.days || plan.daysLeft || 170);
+          const totalProfitNum = parseNum(plan.profit) || (dailyNum * dayNum);
 
-  if (container) {
-    if (!user.activePlans || user.activePlans.length === 0) {
-      container.innerHTML = `
-        <div class="balance-info-card" style="text-align: center; color: var(--color-text-secondary); font-size: 13px;">
-          No active investment plans yet. Go to Home page and buy VIP I, II, III, IV, V, or VI!
-        </div>
-      `;
-    } else {
-      container.innerHTML = user.activePlans.map(plan => `
-        <div class="produce-card-white" style="margin-bottom: 12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <h4 style="font-family:var(--font-family); font-size:16px; font-weight:800; color:var(--color-text-main);">${plan.name}</h4>
-              <p style="font-size:12px; color:var(--color-text-secondary);">Daily yield: <strong style="color:var(--color-accent);">Br ${plan.daily}</strong> | Days left: ${plan.daysLeft}</p>
+          const priceFormatted = `Br${priceNum.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+          const dailyFormatted = `Br ${dailyNum.toLocaleString()}`;
+          const totalProfitFormatted = `Br ${totalProfitNum.toLocaleString()}`;
+
+          return `
+            <div class="produce-card-white" style="margin-bottom: 12px;">
+              <div class="produce-card-body" style="margin-bottom: 12px;">
+                <div class="produce-img-square">
+                  <span class="quota-badge-topleft" style="background: #10B981; color: #FFFFFF; font-weight: 700;">Running</span>
+                  <img src="${imgUrl}" alt="${plan.name}" onerror="this.src='plan_b.png'">
+                </div>
+                <div class="produce-info-right">
+                  <div class="produce-title-bold">${plan.name}</div>
+                  <div class="produce-price-large">${priceFormatted}</div>
+                  <div class="produce-data-grid">
+                    <div class="data-cell">
+                      <span class="data-cell-label">Daily</span>
+                      <span class="data-cell-val" style="color: var(--color-success);">${dailyFormatted}</span>
+                    </div>
+                    <div class="data-cell">
+                      <span class="data-cell-label">Day</span>
+                      <span class="data-cell-val">${dayNum}</span>
+                    </div>
+                    <div class="data-cell">
+                      <span class="data-cell-label">Total</span>
+                      <span class="data-cell-val">${totalProfitFormatted}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="income-status-banner" style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #059669; font-weight: 700; font-size: 12.5px; text-align: center; padding: 8px 12px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #059669;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Active & Generating Daily Yield
+              </div>
             </div>
-            <div style="text-align:right;">
-              <span style="font-size:11px; background:var(--color-accent-subtle); color:var(--color-accent); padding:4px 8px; border-radius:6px; font-weight:700;">RUNNING</span>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 }
 
@@ -1185,8 +1518,8 @@ function closeModal(modalId) {
 }
 
 // Product Purchase Modal Handlers
-function openPurchaseModal(name, price, profit, daily, days) {
-  state.selectedProduct = { name, price: parseFloat(price), profit, daily, days };
+function openPurchaseModal(name, price, profit, daily, days, image) {
+  state.selectedProduct = { name, price: parseFloat(price), profit, daily, days, image: image || getPlanImage(name) };
   
   const titleEl = document.getElementById('purchModalTitle');
   const priceEl = document.getElementById('purchModalPrice');
@@ -1220,50 +1553,260 @@ function confirmPurchaseProduct() {
     return;
   }
 
+  // Deduct balance and create pending plan
   user.balance -= prod.price;
-  user.activePlans.push({
+  
+  // Initialize pendingPlans array if not exists
+  if (!user.pendingPlans) user.pendingPlans = [];
+  
+  const planIndex = user.pendingPlans.length;
+  user.pendingPlans.push({
     name: prod.name,
     price: prod.price,
     daily: prod.daily,
     profit: prod.profit,
-    daysLeft: prod.days
+    days: prod.days,
+    image: prod.image || getPlanImage(prod.name)
   });
+  
   user.history.unshift({
     type: `Purchase: ${prod.name}`,
     amount: -prod.price,
     date: new Date().toLocaleDateString(),
-    status: 'COMPLETED'
+    status: 'PENDING_PAYMENT',
+    planIndex: planIndex
   });
 
   state.registeredUsers[user.mobile] = user;
   state.save();
 
-  // Distribute Level 1 (25%), Level 2 (3%), and Level 3 (2%) Team Commissions
-  distributeTeamCommissions(user, prod.price, `purchase of ${prod.name}`);
-
-  showToast(`Successfully purchased ${prod.name}! Check your Income tab.`);
+  showToast(`Purchase submitted! Please deposit Br ${prod.price} to activate your ${prod.name} plan.`);
+  setTimeout(() => {
+    openRechargeScreen();
+  }, 1500);
   renderAppView();
 }
 
-// Withdrawal Modal Handler
+// Helper to check Ethiopia Local Time (UTC+3) Withdrawal Hours (09:00 AM - 05:00 PM)
+function isWithinEthiopiaWithdrawalHours() {
+  const now = new Date();
+  // Ethiopian Local Time is East Africa Time (UTC+3)
+  const utcHour = now.getUTCHours();
+  const ethiopianHour = (utcHour + 3) % 24;
+
+  // 09:00 AM (hour 9) to 05:00 PM (hour 17)
+  const isAllowed = ethiopianHour >= 9 && ethiopianHour < 17;
+  
+  console.log(`Withdrawal time check: Ethiopia Hour = ${ethiopianHour}, Allowed = ${isAllowed} (09:00-17:00)`);
+  
+  return isAllowed;
+}
+
+// Daily Income Distribution System (24-hour intervals)
+function processDailyIncomeDistribution() {
+  if (!state.currentUser) return;
+  
+  const user = state.currentUser;
+  const now = new Date();
+  let totalDistributed = 0;
+  
+  if (!user.activePlans || user.activePlans.length === 0) {
+    return;
+  }
+  
+  user.activePlans.forEach((plan, index) => {
+    if (!plan.activatedAt || !plan.lastIncomeDistribution) {
+      // Initialize timestamps if missing
+      plan.activatedAt = plan.activatedAt || now.toISOString();
+      plan.lastIncomeDistribution = plan.lastIncomeDistribution || now.toISOString();
+      return;
+    }
+    
+    const lastDistribution = new Date(plan.lastIncomeDistribution);
+    const hoursSinceLastDistribution = (now - lastDistribution) / (1000 * 60 * 60);
+    
+    // Check if 24 hours have passed
+    if (hoursSinceLastDistribution >= 24) {
+      const dailyIncome = parseNum(plan.daily);
+      
+      // Check if plan is still active (has days left)
+      if (plan.daysLeft > 0) {
+        user.balance += dailyIncome;
+        user.accumulatedYield += dailyIncome;
+        
+        // Add to history
+        user.history.unshift({
+          type: `Daily Income (${plan.name})`,
+          amount: dailyIncome,
+          date: now.toLocaleDateString(),
+          status: 'COMPLETED'
+        });
+        
+        totalDistributed += dailyIncome;
+        
+        // Update last distribution timestamp
+        plan.lastIncomeDistribution = now.toISOString();
+        
+        // Decrement days left
+        plan.daysLeft -= 1;
+        
+        console.log(`Distributed daily income Br ${dailyIncome.toFixed(2)} for ${plan.name}. Days left: ${plan.daysLeft}`);
+        
+        // Check if plan has expired
+        if (plan.daysLeft <= 0) {
+          plan.daysLeft = 0;
+          user.history.unshift({
+            type: `Plan Expired (${plan.name})`,
+            amount: 0,
+            date: now.toLocaleDateString(),
+            status: 'COMPLETED'
+          });
+          console.log(`Plan ${plan.name} has expired after ${plan.days} days.`);
+        }
+      }
+    }
+  });
+  
+  if (totalDistributed > 0) {
+    // Recalculate total income from history
+    recalculateTotalIncome(user);
+    
+    state.registeredUsers[user.mobile] = user;
+    state.save();
+    showToast(`🎉 Daily income of Br ${totalDistributed.toFixed(2)} has been added to your balance!`);
+  }
+}
+
+// Recalculate total income from user history
+function recalculateTotalIncome(user) {
+  if (!user || !user.history) return;
+  
+  let totalIncome = 0;
+  
+  user.history.forEach(item => {
+    // Sum all positive amounts (deposits, daily income, commissions)
+    if (item.amount > 0 && (
+      item.type.includes('Daily Income') ||
+      item.type.includes('Commission') ||
+      item.type.includes('Deposit') ||
+      item.type.includes('Yield')
+    )) {
+      totalIncome += item.amount;
+    }
+  });
+  
+  user.accumulatedYield = totalIncome;
+  console.log(`Recalculated total income for user ${user.mobile}: Br ${totalIncome.toFixed(2)}`);
+}
+
+// Initialize daily income check on app load and set up periodic checks
+function initializeDailyIncomeSystem() {
+  // Run immediately on load
+  processDailyIncomeDistribution();
+  
+  // Check every hour (in case user keeps app open)
+  setInterval(() => {
+    processDailyIncomeDistribution();
+  }, 60 * 60 * 1000); // Every hour
+}
+
+// Render Dedicated Withdraw Screen (Matching Reference Functionality & Features)
 function openWithdrawModal() {
   if (!state.currentUser) {
-    showToast('Please login to request a withdrawal!', true);
+    showToast('Please log in to request a withdrawal!', true);
+    switchTab('auth');
     return;
   }
+  openSubpage('withdraw');
+}
+
+function renderWithdrawView() {
+  if (!state.currentUser) return;
   const user = state.currentUser;
 
-  const amountStr = prompt(`Available Balance: Br ${user.balance.toFixed(2)}\nEnter withdrawal amount (Br):`, '500');
-  if (!amountStr || isNaN(amountStr) || parseFloat(amountStr) <= 0) return;
+  const balEl = document.getElementById('withdrawBalanceVal');
+  if (balEl) balEl.innerText = `Br ${user.balance.toFixed(2)}`;
 
-  const amount = parseFloat(amountStr);
-  if (amount > user.balance) {
-    showToast('Insufficient balance for withdrawal!', true);
+  const bd = user.bankDetails || {
+    realName: 'Nobel',
+    bankName: 'Commercial Bank of Ethiopia',
+    accountNumber: '1000736684318'
+  };
+
+  const nameEl = document.getElementById('withdrawRealNameVal');
+  const bankEl = document.getElementById('withdrawBankNameVal');
+  const acEl = document.getElementById('withdrawAccountNumVal');
+
+  if (nameEl) nameEl.innerText = bd.realName;
+  if (bankEl) bankEl.innerText = bd.bankName;
+  if (acEl) acEl.innerText = bd.accountNumber;
+
+  updateWithdrawButtonText();
+
+  // Live Withdrawal Hours Window Status Badge
+  const hoursStatusEl = document.getElementById('withdrawHoursStatusBadge');
+  if (hoursStatusEl) {
+    const isOpen = isWithinEthiopiaWithdrawalHours();
+    if (isOpen) {
+      hoursStatusEl.className = 'withdraw-status-badge open';
+      hoursStatusEl.innerHTML = `🟢 Withdrawal Window OPEN (09:00 AM – 05:00 PM EAT)`;
+    } else {
+      hoursStatusEl.className = 'withdraw-status-badge closed';
+      hoursStatusEl.innerHTML = `🔴 Withdrawal Window CLOSED (09:00 AM – 05:00 PM EAT Only)`;
+    }
+  }
+}
+
+function updateWithdrawButtonText() {
+  const input = document.getElementById('withdrawAmountInput');
+  const btn = document.getElementById('btnSubmitWithdraw');
+  if (!btn) return;
+
+  const val = input ? parseFloat(input.value) || 0 : 0;
+  btn.innerText = `Withdraw Br ${val > 0 ? val.toLocaleString() : '0'}`;
+}
+
+function submitWithdrawalScreen() {
+  if (!state.currentUser) {
+    showToast('Please log in first!', true);
+    switchTab('auth');
     return;
   }
 
-  const bankChoice = prompt('Enter Bank / Wallet Name (CBE or Telebirr):', 'CBE') || 'CBE';
-  const acNum = prompt('Enter Bank / Telebirr Account Number:', '1000' + Math.floor(100000000 + Math.random() * 900000000)) || '1000123456789';
+  // Strict Enforce Withdrawal Hours: 09:00 AM – 05:00 PM (Ethiopia local time)
+  if (!isWithinEthiopiaWithdrawalHours()) {
+    showToast('⚠️ Withdrawals are strictly allowed only during Withdrawal Hours: 09:00 AM – 05:00 PM (Ethiopia local time)!', true, 4500);
+    return;
+  }
+
+  const user = state.currentUser;
+  const input = document.getElementById('withdrawAmountInput');
+  const amount = input ? parseFloat(input.value) : 0;
+
+  if (isNaN(amount) || amount <= 0) {
+    showToast('Please enter a valid withdrawal amount!', true);
+    return;
+  }
+
+  if (amount < 200) {
+    showToast('Minimum Withdrawal Amount is Br 200!', true);
+    return;
+  }
+
+  // Calculate 15% fee (deducted from requested amount)
+  const fee = amount * 0.15;
+  const actualWithdrawal = amount - fee;
+
+  if (amount > user.balance) {
+    showToast(`Insufficient balance! Required: Br ${amount.toFixed(2)}. Available: Br ${user.balance.toFixed(2)}`, true);
+    return;
+  }
+
+  const bd = user.bankDetails || {
+    realName: 'Nobel',
+    bankName: 'Commercial Bank of Ethiopia',
+    accountNumber: '1000736684318'
+  };
 
   const wId = `w_${Date.now()}`;
   const userPhone = user.mobile || user.fullMobile;
@@ -1272,19 +1815,23 @@ function openWithdrawModal() {
   state.adminWithdrawals.unshift({
     id: wId,
     phone: userPhone,
-    bank: bankChoice,
-    account: acNum,
-    amount: amount,
+    bank: bd.bankName,
+    account: bd.accountNumber,
+    requestedAmount: amount,
+    fee: fee,
+    actualWithdrawal: actualWithdrawal,
     status: 'Processing',
     createdAt: new Date().toISOString()
   });
 
-  // Hold balance and add PENDING withdrawal to user history
+  // Hold balance (requested amount) and add PENDING withdrawal to user history
   user.balance -= amount;
   user.history.unshift({
     id: wId,
-    type: `Withdrawal (${bankChoice})`,
+    type: `Withdrawal (${bd.bankName})`,
     amount: -amount,
+    fee: fee,
+    actualWithdrawal: actualWithdrawal,
     date: new Date().toLocaleDateString(),
     status: 'PENDING'
   });
@@ -1292,8 +1839,105 @@ function openWithdrawModal() {
   state.registeredUsers[user.mobile] = user;
   state.save();
 
-  showToast(`Withdrawal of Br ${amount.toFixed(2)} submitted successfully!`);
-  renderAppView();
+  if (input) input.value = '';
+  updateWithdrawButtonText();
+  renderWithdrawView();
+
+  showToast(`✅ Withdrawal request of Br ${amount.toFixed(2)} submitted successfully!`);
+}
+
+function renderBindWalletView() {
+  if (!state.currentUser) return;
+  const bd = state.currentUser.bankDetails || {
+    realName: 'Nobel',
+    bankName: 'Commercial Bank of Ethiopia',
+    accountNumber: '1000736684318'
+  };
+
+  const nameIn = document.getElementById('bindRealNameInput');
+  const bankIn = document.getElementById('bindBankInput');
+  const acIn = document.getElementById('bindAcNumInput');
+
+  if (nameIn) nameIn.value = bd.realName;
+  if (bankIn) bankIn.value = bd.bankName;
+  if (acIn) acIn.value = bd.accountNumber;
+
+  // Update card display with all values
+  const cardName = document.getElementById('bindWalletCardName');
+  const cardBank = document.getElementById('bindWalletCardBank');
+  const cardAccount = document.getElementById('bindWalletCardAccount');
+  
+  if (cardName) cardName.innerText = bd.realName;
+  if (cardBank) cardBank.innerText = bd.bankName;
+  if (cardAccount) cardAccount.innerText = bd.accountNumber;
+}
+
+// Profile Carousel Functions
+let profileCarouselIndex = 0;
+let profileCarouselInterval = null;
+
+function updateProfileCarouselPosition() {
+  const track = document.getElementById('profileCarouselTrack');
+  const dots = document.querySelectorAll('#profileCarouselDots .carousel-dot');
+  
+  if (track) {
+    track.style.transform = `translateX(-${profileCarouselIndex * 100}%)`;
+  }
+  
+  if (dots) {
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === profileCarouselIndex);
+    });
+  }
+}
+
+function goToProfileCarouselSlide(index) {
+  profileCarouselIndex = index;
+  updateProfileCarouselPosition();
+  
+  // Reset auto-advance timer
+  if (profileCarouselInterval) clearInterval(profileCarouselInterval);
+  profileCarouselInterval = setInterval(() => {
+    profileCarouselIndex = (profileCarouselIndex + 1) % 3;
+    updateProfileCarouselPosition();
+  }, 5000);
+}
+
+// Start profile carousel auto-advance when profile page loads
+function startProfileCarousel() {
+  if (profileCarouselInterval) clearInterval(profileCarouselInterval);
+  profileCarouselInterval = setInterval(() => {
+    profileCarouselIndex = (profileCarouselIndex + 1) % 3;
+    updateProfileCarouselPosition();
+  }, 5000);
+}
+
+function saveBindWallet() {
+  if (!state.currentUser) return;
+  const nameIn = document.getElementById('bindRealNameInput');
+  const bankIn = document.getElementById('bindBankInput');
+  const acIn = document.getElementById('bindAcNumInput');
+
+  const realName = nameIn ? nameIn.value.trim() : '';
+  const bankName = bankIn ? bankIn.value.trim() : '';
+  const accountNumber = acIn ? acIn.value.trim() : '';
+
+  if (!realName || !bankName || !accountNumber) {
+    showToast('Please fill in all bank details!', true);
+    return;
+  }
+
+  state.currentUser.bankDetails = {
+    realName,
+    bankName,
+    accountNumber
+  };
+
+  state.registeredUsers[state.currentUser.mobile] = state.currentUser;
+  state.save();
+
+  showToast('✅ Bank Card details bound successfully!');
+  openSubpage('withdraw');
 }
 
 // Customer Support Modal Handler
@@ -1353,22 +1997,51 @@ function renderShareView() {
   if (codeInput) codeInput.value = code;
 }
 
+// Universal Cross-Platform Clipboard Copy Handler
+function copyText(text) {
+  if (!text) return;
+  const strText = text.toString().trim();
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(strText).then(() => {
+      showToast(`✅ Copied: ${strText}`);
+    }).catch(() => {
+      fallbackCopyText(strText);
+    });
+  } else {
+    fallbackCopyText(strText);
+  }
+}
+
+function fallbackCopyText(text) {
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.top = '0';
+    textArea.style.left = '-9999px';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    if (textArea.setSelectionRange) {
+      textArea.setSelectionRange(0, 999999);
+    }
+
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    showToast(`✅ Copied: ${text}`);
+  } catch (err) {
+    showToast(`Copied: ${text}`);
+  }
+}
+
 function copyUserShareLink() {
   const linkInput = document.getElementById('shareLinkInput');
   if (linkInput) {
     linkInput.select();
-    const linkVal = linkInput.value;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(linkVal).then(() => {
-        showToast('✅ Unique promotion link copied to clipboard!');
-      }).catch(() => {
-        document.execCommand('copy');
-        showToast('✅ Unique promotion link copied to clipboard!');
-      });
-    } else {
-      document.execCommand('copy');
-      showToast('✅ Unique promotion link copied to clipboard!');
-    }
+    copyText(linkInput.value || 'https://shambavest.app/?ref=f513800e');
   }
 }
 
@@ -1376,18 +2049,7 @@ function copyUserShareCode() {
   const codeInput = document.getElementById('shareCodeInput');
   if (codeInput) {
     codeInput.select();
-    const codeVal = codeInput.value;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(codeVal).then(() => {
-        showToast(`✅ Referral code ${codeVal} copied to clipboard!`);
-      }).catch(() => {
-        document.execCommand('copy');
-        showToast(`✅ Referral code ${codeVal} copied to clipboard!`);
-      });
-    } else {
-      document.execCommand('copy');
-      showToast(`✅ Referral code ${codeVal} copied to clipboard!`);
-    }
+    copyText(codeInput.value || 'f513800e');
   }
 }
 
@@ -1577,6 +2239,41 @@ function renderTeamView() {
    ========================================================================== */
 
 function openAdminPortal() {
+  console.log('Attempting to open admin portal...');
+  console.log('Current admin password:', state.adminPassword);
+  
+  // Show custom password modal
+  openModal('adminPasswordModal');
+  
+  // Clear previous input
+  const passwordInput = document.getElementById('adminPasswordInput');
+  if (passwordInput) {
+    passwordInput.value = '';
+    passwordInput.focus();
+  }
+}
+
+function submitAdminPassword() {
+  const passwordInput = document.getElementById('adminPasswordInput');
+  const password = passwordInput ? passwordInput.value : '';
+  
+  console.log('Password entered:', password ? '***' : 'empty');
+  
+  if (!password) {
+    showToast('Please enter a password!', true);
+    return;
+  }
+  
+  if (password !== state.adminPassword) {
+    console.log('Password incorrect');
+    showToast('Incorrect admin password!', true);
+    passwordInput.value = '';
+    return;
+  }
+  
+  console.log('Password correct, opening admin portal');
+  closeModal('adminPasswordModal');
+  
   state.isAdminMode = true;
   
   // Hide normal bottom nav bar
@@ -1600,6 +2297,10 @@ function openAdminPortal() {
   if (adminView) adminView.style.display = 'flex';
 
   switchAdminTab(state.adminActiveTab || 'deposit');
+}
+
+function closeAdminPasswordModal() {
+  closeModal('adminPasswordModal');
 }
 
 function exitAdminPortal() {
@@ -1669,20 +2370,28 @@ function renderAdminDashboard() {
   
   const approvedDepSum = state.adminDeposits
     .filter(d => d.status === 'Approved')
-    .reduce((sum, d) => sum + (d.rawAmount || parseFloat(d.amount) || 0), 40281200);
+    .reduce((sum, d) => sum + (d.rawAmount || parseFloat(d.amount) || 0), 0);
 
   const approvedWithSum = state.adminWithdrawals
     .filter(w => w.status === 'Approved')
-    .reduce((sum, w) => sum + (w.amount || 0), 32345);
+    .reduce((sum, w) => sum + (w.amount || 0), 0);
 
-  const totalUsersCount = Object.keys(state.registeredUsers).length + state.adminUsersList.length;
+  const totalUsersCount = Object.keys(state.registeredUsers).length;
 
-  if (totMembers) totMembers.innerText = totalUsersCount || '946';
-  if (actMembers) actMembers.innerText = Math.max(1, totalUsersCount - 2) || '938';
+  if (totMembers) totMembers.innerText = totalUsersCount || '0';
+  if (actMembers) actMembers.innerText = Math.max(1, totalUsersCount) || '0';
   if (totDep) totDep.innerText = approvedDepSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (procDep) procDep.innerText = pendingDepsCount;
   if (totWith) totWith.innerText = approvedWithSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (procWith) procWith.innerText = pendingWithsCount;
+  
+  console.log('Dashboard stats updated from real Firebase data:', {
+    totalUsers: totalUsersCount,
+    totalDeposit: approvedDepSum,
+    processingDeposit: pendingDepsCount,
+    totalWithdraw: approvedWithSum,
+    processingWithdraw: pendingWithsCount
+  });
 }
 
 // 2. Render Pending Deposits (Matching Screenshot 1 & 2)
@@ -1784,22 +2493,32 @@ function renderAdminUsers(filterQuery = '') {
       <td>
         <div class="user-actions-row">
           <!-- 1. Login As User (Blue) -->
-          <button type="button" class="btn-user-act btn-user-act-login" title="Login As User" onclick="adminLoginAsUser('${u.phone}')">
+          <button type="button" class="btn-user-act btn-user-act-login" data-tooltip="Login as this user" onclick="adminLoginAsUser('${u.phone}')">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           </button>
           
           <!-- 2. Gift Bonus (Purple) -->
-          <button type="button" class="btn-user-act btn-user-act-bonus" title="Add Bonus" onclick="adminGiveUserBonus('${u.phone}')">
+          <button type="button" class="btn-user-act btn-user-act-bonus" data-tooltip="Add bonus to user" onclick="adminGiveUserBonus('${u.phone}')">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg>
           </button>
 
-          <!-- 3. Reset Password (Amber) -->
-          <button type="button" class="btn-user-act btn-user-act-key" title="Reset Password" onclick="adminResetUserPassword('${u.phone}')">
+          <!-- 3. Edit Income (Green) -->
+          <button type="button" class="btn-user-act btn-user-act-edit" data-tooltip="Edit user total income" onclick="adminEditUserIncome('${u.phone}')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+
+          <!-- 4. Remove Products (Orange) -->
+          <button type="button" class="btn-user-act btn-user-act-remove" data-tooltip="Remove user products" onclick="adminRemoveUserProducts('${u.phone}')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </button>
+
+          <!-- 5. Reset Password (Amber) -->
+          <button type="button" class="btn-user-act btn-user-act-key" data-tooltip="Reset user password" onclick="adminResetUserPassword('${u.phone}')">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6"/><path d="M15.5 7.5l3 3"/></svg>
           </button>
 
-          <!-- 4. Delete / Ban (Red) -->
-          <button type="button" class="btn-user-act btn-user-act-delete" title="Delete User" onclick="adminDeleteUser('${u.phone}')">
+          <!-- 6. Delete / Ban (Red) -->
+          <button type="button" class="btn-user-act btn-user-act-delete" data-tooltip="Delete user account" onclick="adminDeleteUser('${u.phone}')">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
@@ -1856,6 +2575,75 @@ function adminGiveUserBonus(phone) {
   renderAdminUsers();
 }
 
+function adminEditUserIncome(phone) {
+  const user = state.registeredUsers[phone];
+  if (!user) {
+    showToast('User not found!', true);
+    return;
+  }
+
+  const currentIncome = user.accumulatedYield || 0;
+  const newIncomeStr = prompt(`Current total income for user ${phone}: ${currentIncome.toFixed(2)} ETB\n\nEnter new total income amount:`, currentIncome.toFixed(2));
+  
+  if (!newIncomeStr || isNaN(newIncomeStr) || parseFloat(newIncomeStr) < 0) return;
+
+  const newIncome = parseFloat(newIncomeStr);
+  user.accumulatedYield = newIncome;
+  
+  // Update admin users list if exists
+  const userItem = state.adminUsersList.find(u => u.phone === phone);
+  if (userItem) {
+    userItem.accumulatedYield = newIncome;
+  }
+  
+  state.save();
+  showToast(`✅ Total income for user ${phone} updated to ${newIncome.toFixed(2)} ETB!`);
+  renderAdminUsers();
+}
+
+function adminRemoveUserProducts(phone) {
+  const user = state.registeredUsers[phone];
+  if (!user) {
+    showToast('User not found!', true);
+    return;
+  }
+
+  if (!user.activePlans || user.activePlans.length === 0) {
+    showToast('User has no active products to remove.', true);
+    return;
+  }
+
+  // Show list of active products
+  const productList = user.activePlans.map((plan, index) => 
+    `${index + 1}. ${plan.name} - ${plan.daily} daily (${plan.daysLeft} days left)`
+  ).join('\n');
+  
+  const choice = prompt(`User ${phone} has the following active products:\n\n${productList}\n\nEnter the number of the product to remove (or 'all' to remove all):`);
+  
+  if (!choice) return;
+
+  if (choice.toLowerCase() === 'all') {
+    if (!confirm(`Are you sure you want to remove ALL products from user ${phone}?`)) return;
+    user.activePlans = [];
+    showToast(`✅ All products removed from user ${phone}!`);
+  } else {
+    const index = parseInt(choice) - 1;
+    if (isNaN(index) || index < 0 || index >= user.activePlans.length) {
+      showToast('Invalid product number!', true);
+      return;
+    }
+    
+    const removedPlan = user.activePlans[index];
+    if (!confirm(`Are you sure you want to remove ${removedPlan.name} from user ${phone}?`)) return;
+    
+    user.activePlans.splice(index, 1);
+    showToast(`✅ ${removedPlan.name} removed from user ${phone}!`);
+  }
+
+  state.save();
+  renderAdminUsers();
+}
+
 function adminResetUserPassword(phone) {
   const newPass = prompt(`Enter new password for user ${phone}:`, '123456');
   if (!newPass) return;
@@ -1875,6 +2663,74 @@ function adminDeleteUser(phone) {
   state.save();
   showToast(`🗑️ User ${phone} deleted successfully!`);
   renderAdminUsers();
+}
+
+function adminChangePassword() {
+  // Show custom change password modal
+  openModal('adminChangePasswordModal');
+  
+  // Clear previous inputs
+  const currentInput = document.getElementById('currentPasswordInput');
+  const newInput = document.getElementById('newPasswordInput');
+  const confirmInput = document.getElementById('confirmPasswordInput');
+  
+  if (currentInput) currentInput.value = '';
+  if (newInput) newInput.value = '';
+  if (confirmInput) confirmInput.value = '';
+  
+  if (currentInput) currentInput.focus();
+}
+
+function submitAdminChangePassword() {
+  const currentInput = document.getElementById('currentPasswordInput');
+  const newInput = document.getElementById('newPasswordInput');
+  const confirmInput = document.getElementById('confirmPasswordInput');
+  
+  const currentPassword = currentInput ? currentInput.value : '';
+  const newPassword = newInput ? newInput.value : '';
+  const confirmPassword = confirmInput ? confirmInput.value : '';
+  
+  if (!currentPassword) {
+    showToast('Please enter current password!', true);
+    return;
+  }
+  
+  if (currentPassword !== state.adminPassword) {
+    showToast('Incorrect current password!', true);
+    currentInput.value = '';
+    return;
+  }
+  
+  if (!newPassword) {
+    showToast('Please enter new password!', true);
+    return;
+  }
+  
+  if (newPassword.length < 4) {
+    showToast('Password must be at least 4 characters!', true);
+    return;
+  }
+  
+  if (!confirmPassword) {
+    showToast('Please confirm new password!', true);
+    return;
+  }
+  
+  if (newPassword !== confirmPassword) {
+    showToast('Passwords do not match!', true);
+    newInput.value = '';
+    confirmInput.value = '';
+    return;
+  }
+  
+  state.adminPassword = newPassword;
+  state.save();
+  closeModal('adminChangePasswordModal');
+  showToast('✅ Admin password changed successfully!');
+}
+
+function closeAdminChangePasswordModal() {
+  closeModal('adminChangePasswordModal');
 }
 
 // 5. Render VIP Investment Plans (Matching Screenshot 4)
@@ -1932,17 +2788,17 @@ function approveDepositRequest(depId) {
   if (!dep) return;
 
   dep.status = 'Approved';
-  const creditAmt = dep.rawAmount || parseFloat(dep.amount) || 700;
 
+  const creditAmt = dep.rawAmount || parseFloat(dep.amount) || 0;
   let targetUser = null;
-  // Credit target user in state.registeredUsers
+
   for (let key in state.registeredUsers) {
     const user = state.registeredUsers[key];
     if (user.mobile.includes(dep.phone) || dep.phone.includes(user.mobile)) {
       user.balance += creditAmt;
-      targetUser = user;
       const h = (user.history || []).find(item => item.id === depId || item.type.includes('Deposit'));
       if (h) h.status = 'COMPLETED';
+      targetUser = user;
     }
   }
 
@@ -1953,9 +2809,46 @@ function approveDepositRequest(depId) {
 
   if (targetUser) {
     distributeTeamCommissions(targetUser, creditAmt, 'recharge deposit approval');
+    
+    // Recalculate total income after deposit
+    recalculateTotalIncome(targetUser);
+    
+    // Check if this deposit was for a VIP product purchase
+    // Look for a pending purchase in user's history that matches this deposit amount
+    const pendingPurchase = (targetUser.history || []).find(h => 
+      h.type.includes('Purchase') && 
+      h.status === 'PENDING_PAYMENT' && 
+      Math.abs(h.amount) === creditAmt
+    );
+    
+    if (pendingPurchase) {
+      // Activate the corresponding plan
+      const planIndex = pendingPurchase.planIndex;
+      if (planIndex !== undefined && targetUser.pendingPlans && targetUser.pendingPlans[planIndex]) {
+        const plan = targetUser.pendingPlans[planIndex];
+        
+        // Add to active plans with timestamp for daily income tracking
+        targetUser.activePlans.push({
+          ...plan,
+          activatedAt: new Date().toISOString(),
+          lastIncomeDistribution: new Date().toISOString(),
+          daysLeft: plan.days
+        });
+        
+        // Remove from pending plans
+        targetUser.pendingPlans.splice(planIndex, 1);
+        
+        // Update history status
+        pendingPurchase.status = 'COMPLETED';
+        pendingPurchase.date = new Date().toLocaleDateString();
+        
+        console.log(`Activated VIP plan: ${plan.name} for user ${targetUser.mobile}`);
+      }
+    }
   }
 
   state.save();
+  console.log(`Deposit approved for ${dep.phone}, amount: ${creditAmt}, synced to Firebase`);
   showToast(`✅ Deposit for ${dep.phone} APPROVED! ETB ${creditAmt.toFixed(2)} credited.`);
   renderAdminDeposits();
   renderAdminDashboard();
@@ -1972,10 +2865,14 @@ function rejectDepositRequest(depId) {
     if (user.mobile.includes(dep.phone) || dep.phone.includes(user.mobile)) {
       const h = (user.history || []).find(item => item.id === depId || item.type.includes('Deposit'));
       if (h) h.status = 'REJECTED';
+      
+      // Recalculate total income after deposit rejection
+      recalculateTotalIncome(user);
     }
   }
 
   state.save();
+  console.log(`Deposit rejected for ${dep.phone}, synced to Firebase`);
   showToast(`❌ Deposit for ${dep.phone} REJECTED.`);
   renderAdminDeposits();
   renderAdminDashboard();
@@ -1985,6 +2882,29 @@ function approveWithdrawalRequest(wId) {
   const w = state.adminWithdrawals.find(item => item.id === wId);
   if (!w) return;
 
+  // Check user balance before approval
+  let targetUser = null;
+  for (let key in state.registeredUsers) {
+    const user = state.registeredUsers[key];
+    if (w.phone && (user.mobile.includes(w.phone) || w.phone.includes(user.mobile))) {
+      targetUser = user;
+      break;
+    }
+  }
+
+  if (!targetUser) {
+    showToast('User not found! Cannot approve withdrawal.', true);
+    return;
+  }
+
+  const requestedAmount = w.requestedAmount || w.amount;
+  
+  // Check if user has sufficient balance (balance was already deducted, but verify)
+  if (targetUser.balance < 0) {
+    showToast(`User has insufficient balance! Current: Br ${targetUser.balance.toFixed(2)}. Cannot approve.`, true);
+    return;
+  }
+
   w.status = 'Approved';
 
   for (let key in state.registeredUsers) {
@@ -1992,11 +2912,15 @@ function approveWithdrawalRequest(wId) {
     if (w.phone && (user.mobile.includes(w.phone) || w.phone.includes(user.mobile))) {
       const h = (user.history || []).find(item => item.id === wId || item.type.includes('Withdrawal'));
       if (h) h.status = 'COMPLETED';
+      
+      // Recalculate total income after withdrawal approval
+      recalculateTotalIncome(user);
     }
   }
 
   state.save();
-  showToast(`✅ Withdrawal for ${w.bank} (${w.account}) APPROVED!`);
+  console.log(`Withdrawal approved for ${w.phone}, requested: Br ${requestedAmount}, fee: Br ${w.fee || (requestedAmount * 0.15).toFixed(2)}, actual: Br ${w.actualWithdrawal || (requestedAmount - (requestedAmount * 0.15)).toFixed(2)}, synced to Firebase`);
+  showToast(`✅ Withdrawal for ${w.bank} (${w.account}) APPROVED! Requested: Br ${requestedAmount}, Fee: Br ${w.fee || (requestedAmount * 0.15).toFixed(2)}, Actual: Br ${w.actualWithdrawal || (requestedAmount - (requestedAmount * 0.15)).toFixed(2)}`);
   renderAdminWithdrawals();
   renderAdminDashboard();
 }
@@ -2006,15 +2930,19 @@ function rejectWithdrawalRequest(wId) {
   if (!w) return;
 
   w.status = 'Rejected';
-  const refundAmt = w.amount || 500;
 
-  // Refund user balance!
+  // Refund the requested amount (full amount that was deducted)
+  const refundAmt = w.requestedAmount || w.amount;
+
   for (let key in state.registeredUsers) {
     const user = state.registeredUsers[key];
     if (w.phone && (user.mobile.includes(w.phone) || w.phone.includes(user.mobile))) {
       user.balance += refundAmt;
       const h = (user.history || []).find(item => item.id === wId || item.type.includes('Withdrawal'));
       if (h) h.status = 'REJECTED';
+      
+      // Recalculate total income after withdrawal rejection
+      recalculateTotalIncome(user);
     }
   }
 
@@ -2023,7 +2951,8 @@ function rejectWithdrawalRequest(wId) {
   }
 
   state.save();
-  showToast(`❌ Withdrawal for ${w.bank} (${w.account}) REJECTED. Balance ETB ${refundAmt.toFixed(2)} refunded to user.`);
+  console.log(`Withdrawal rejected for ${w.phone}, amount: Br ${refundAmt.toFixed(2)} refunded, synced to Firebase`);
+  showToast(`❌ Withdrawal for ${w.bank} (${w.account}) REJECTED. Balance Br ${refundAmt.toFixed(2)} refunded to user.`);
   renderAdminWithdrawals();
   renderAdminDashboard();
 }
@@ -2035,13 +2964,7 @@ function getAdminStatusBadgeClass(status) {
 }
 
 function copyAdminText(text) {
-  const tempInput = document.createElement('textarea');
-  tempInput.value = text;
-  document.body.appendChild(tempInput);
-  tempInput.select();
-  document.execCommand('copy');
-  document.body.removeChild(tempInput);
-  showToast('Copied to clipboard!');
+  copyText(text);
 }
 
 function escapeJsString(str) {
