@@ -25,7 +25,7 @@
     </div>
 
     <!-- App Launch Splash Loading Overlay (Enhanced Modern Design) -->
-    <div id="appLoadingSplash" class="splash-loading-overlay">
+    <div id="appLoadingSplash" class="splash-loading-overlay" style="display: none;">
       
       <!-- Circular Logo Badge & SVG Arc Ring -->
       <div class="splash-logo-circle-wrapper">
@@ -67,7 +67,7 @@
     </div>
 
     <!-- Top Header Bar -->
-    <header class="top-header" id="topHeader">
+    <header class="top-header" id="topHeader" style="display: none !important;">
       <div class="brand-badge">
         
         <!-- ShambaVest Emblem (Sprouting Leaf + Financial Growth Chart Line) -->
@@ -96,137 +96,146 @@
     <main class="main-content">
 
       <!-- ================= A. AUTHENTICATION VIEW (LOGIN / REGISTER) ================= -->
-      <section id="authView" style="display: block;">
+      <section id="authView" class="shambavest-auth-section" style="display: block;">
         
-        <!-- Hero Header Banner -->
-        <div class="auth-hero-banner">
-          <div class="auth-hero-overlay">
-            <h2 id="authHeadingText">Create Account</h2>
-            <p id="authSubheadingText">Join ShambaVest to start earning daily returns</p>
+        <!-- Branded Hero Header with ShambaVest Banner Photo -->
+        <div class="shambavest-hero-banner">
+          <div class="shambavest-hero-overlay"></div>
+          <div class="shambavest-pattern-svg-bg"></div>
+        </div>
+
+        <!-- Floating Circular Brand Emblem Badge -->
+        <div class="shambavest-logo-floating-wrapper">
+          <div class="shambavest-logo-badge-circle" title="ShambaVest">
+            <img src="shambavest_logo_badge.png" alt="ShambaVest Logo" class="shambavest-logo-badge-img">
           </div>
         </div>
 
-        <!-- Floating Auth Card -->
-        <div class="auth-card-floating">
+        <!-- Elevated White Authentication Card Sheet -->
+        <div class="shambavest-auth-card">
           
-          <!-- Tab Switcher (Login / Register) -->
-          <div class="auth-tab-switcher">
-            <button id="btnAuthLogin" type="button" class="auth-tab-btn" data-i18n="tabLogin">Login</button>
-            <button id="btnAuthRegister" type="button" class="auth-tab-btn active" data-i18n="tabRegister">Register</button>
-          </div>
+          <!-- Interactive Tabs Header (LOGIN | REGISTER) -->
+          <nav class="auth-tab-nav" aria-label="Authentication Navigation">
+            <button id="btnAuthLogin" type="button" class="auth-tab-button" data-i18n="tabLogin" aria-selected="false" role="tab">Login</button>
+            <button id="btnAuthRegister" type="button" class="auth-tab-button active" data-i18n="tabRegister" aria-selected="true" role="tab">Register</button>
+            <div id="authTabUnderline" class="auth-tab-active-line"></div>
+          </nav>
 
           <!-- Registration Form -->
-          <form id="regForm" style="display: block;">
+          <form id="regForm" style="display: block;" novalidate>
             
             <!-- Mobile Phone Input -->
-            <div class="form-group">
-              <label class="form-label" data-i18n="mobileLabel">Phone Number</label>
-              <div class="input-box">
-                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                </span>
-                <span class="country-divider">+251</span>
-                <input type="tel" id="regMobileInput" class="form-field-input" placeholder="Enter Phone Number" required>
+            <div class="auth-form-group">
+              <label for="regMobileInput" class="auth-field-label">
+                <span data-i18n="mobileLabel">Phone Number</span>
+              </label>
+              <div class="auth-input-container" id="regMobileContainer">
+                <span class="country-code-badge">+251</span>
+                <input type="tel" id="regMobileInput" class="auth-input-field" placeholder="Enter Phone Number" autocomplete="tel" required>
               </div>
+              <div class="field-error-text" id="regMobileError">Please enter a valid phone number.</div>
             </div>
 
             <!-- New Password -->
-            <div class="form-group">
-              <label class="form-label" data-i18n="passwordLabel">New Password</label>
-              <div class="input-box">
-                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+            <div class="auth-form-group">
+              <label for="regPassInput" class="auth-field-label">
+                <span data-i18n="passwordLabel">New Password</span>
+              </label>
+              <div class="auth-input-container" id="regPassContainer">
+                <span class="auth-icon-leading">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </span>
-                <input type="password" id="regPassInput" class="form-field-input" placeholder="Please new password" required>
-                <button type="button" class="btn-eye-toggle" onclick="togglePassVisibility('regPassInput')">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <input type="password" id="regPassInput" class="auth-input-field" placeholder="Please new password" autocomplete="new-password" required>
+                <button type="button" class="auth-eye-toggle-btn" aria-label="Toggle password visibility" onclick="togglePassVisibility('regPassInput', this)">
+                  <svg class="svg-icon svg-icon-sm eye-icon-svg" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
+              <div class="field-error-text" id="regPassError">Password must be at least 6 characters.</div>
             </div>
 
             <!-- Confirm Password -->
-            <div class="form-group">
-              <label class="form-label" data-i18n="confirmPasswordLabel">Confirm Password</label>
-              <div class="input-box">
-                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+            <div class="auth-form-group">
+              <label for="regConfirmPassInput" class="auth-field-label">
+                <span data-i18n="confirmPasswordLabel">Confirm Password</span>
+              </label>
+              <div class="auth-input-container" id="regConfirmPassContainer">
+                <span class="auth-icon-leading">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </span>
-                <input type="password" id="regConfirmPassInput" class="form-field-input" placeholder="Please new password again" required>
-                <button type="button" class="btn-eye-toggle" onclick="togglePassVisibility('regConfirmPassInput')">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <input type="password" id="regConfirmPassInput" class="auth-input-field" placeholder="Please new password again" autocomplete="new-password" required>
+                <button type="button" class="auth-eye-toggle-btn" aria-label="Toggle password visibility" onclick="togglePassVisibility('regConfirmPassInput', this)">
+                  <svg class="svg-icon svg-icon-sm eye-icon-svg" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
+              <div class="field-error-text" id="regConfirmPassError">Passwords do not match.</div>
             </div>
 
             <!-- Invite / Referral Code -->
-            <div class="form-group">
-              <label class="form-label" data-i18n="referralCodeLabel">Referral Code</label>
-              <div class="input-box">
-                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <div class="auth-form-group">
+              <label for="regInviteCodeInput" class="auth-field-label">
+                <span data-i18n="referralCodeLabel">Referral Code</span>
+              </label>
+              <div class="auth-input-container">
+                <span class="auth-icon-leading">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
                 </span>
-                <input type="text" id="regInviteCodeInput" class="form-field-input" value="150bc0d8" placeholder="150bc0d8">
+                <input type="text" id="regInviteCodeInput" class="auth-input-field" value="f51380e" placeholder="Referral code">
               </div>
             </div>
 
-            <!-- Submit Register Button -->
-            <button type="submit" class="btn-primary-action" style="margin-top: 20px;">
-              <span data-i18n="btnRegister">Register</span>
+            <!-- Submit Register Button (Pill CTA) -->
+            <button type="submit" id="regSubmitBtn" class="btn-pill-primary">
+              <span id="regSubmitBtnText" data-i18n="btnRegister">Register</span>
             </button>
 
             <!-- Switch to Login Link -->
-            <div style="text-align: center; margin-top: 16px;">
-              <button type="button" id="switchToLoginLink" style="background:none; border:none; color: var(--color-text-secondary); font-size:13.5px; font-weight:600; cursor:pointer;" data-i18n="alreadyHaveAccount">
+            <div class="auth-switch-footer">
+              <button type="button" id="switchToLoginLink" class="auth-switch-link" data-i18n="alreadyHaveAccount">
                 I already have an account
               </button>
             </div>
           </form>
 
           <!-- Login Form -->
-          <form id="loginForm" style="display: none;">
+          <form id="loginForm" style="display: none;" novalidate>
             
             <!-- Mobile Phone Input -->
-            <div class="form-group">
-              <label class="form-label" data-i18n="mobileLabel">Phone Number</label>
-              <div class="input-box">
-                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                </span>
-                <span class="country-divider">+251</span>
-                <input type="tel" id="loginMobileInput" class="form-field-input" placeholder="Enter Phone Number" required>
+            <div class="auth-form-group">
+              <label for="loginMobileInput" class="auth-field-label">
+                <span data-i18n="mobileLabel">Phone Number</span>
+              </label>
+              <div class="auth-input-container" id="loginMobileContainer">
+                <span class="country-code-badge">+251</span>
+                <input type="tel" id="loginMobileInput" class="auth-input-field" placeholder="Enter Phone Number" autocomplete="tel" required>
               </div>
+              <div class="field-error-text" id="loginMobileError">Please enter your phone number.</div>
             </div>
 
             <!-- Password Input -->
-            <div class="form-group">
-              <label class="form-label" data-i18n="passwordLabel">Password</label>
-              <div class="input-box">
-                <span style="display:flex; align-items:center; margin-right: 8px; color: var(--color-text-muted);">
+            <div class="auth-form-group">
+              <label for="loginPassInput" class="auth-field-label">
+                <span data-i18n="passwordLabel">Password</span>
+              </label>
+              <div class="auth-input-container" id="loginPassContainer">
+                <span class="auth-icon-leading">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </span>
-                <input type="password" id="loginPassInput" class="form-field-input" placeholder="Enter your password" required>
-                <button type="button" class="btn-eye-toggle" onclick="togglePassVisibility('loginPassInput')">
-                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <input type="password" id="loginPassInput" class="auth-input-field" placeholder="Please new password" autocomplete="current-password" required>
+                <button type="button" class="auth-eye-toggle-btn" aria-label="Toggle password visibility" onclick="togglePassVisibility('loginPassInput', this)">
+                  <svg class="svg-icon svg-icon-sm eye-icon-svg" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
+              <div class="field-error-text" id="loginPassError">Please enter your password.</div>
             </div>
 
-            <!-- Contact Person Section -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px; padding: 12px; background: #F1F5F9; border-radius: 8px;">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="color: var(--color-accent);">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-              <span style="font-size: 13px; color: var(--color-text-main); font-weight: 600;">Contact Support: +251 911 234 567</span>
-            </div>
-
-            <!-- Submit Login Button -->
-            <button type="submit" class="btn-primary-action">
-              <span data-i18n="btnLogin">Login</span>
+            <!-- Submit Login Button (Pill CTA) -->
+            <button type="submit" id="loginSubmitBtn" class="btn-pill-primary">
+              <span id="loginSubmitBtnText" data-i18n="btnLogin">Login</span>
             </button>
 
             <!-- Switch to Register Link -->
-            <div style="text-align: center; margin-top: 16px;">
-              <button type="button" id="switchToRegisterLink" style="background:none; border:none; color: var(--color-text-secondary); font-size:13.5px; font-weight:600; cursor:pointer;" data-i18n="needAccount">
+            <div class="auth-switch-footer">
+              <button type="button" id="switchToRegisterLink" class="auth-switch-link" data-i18n="needAccount">
                 Don't have an account? Register
               </button>
             </div>
@@ -670,36 +679,42 @@
           
           <!-- Balance Summary Card -->
           <div class="balance-info-card">
-            <div class="balance-info-title">Current Balance</div>
-            <div class="balance-info-val" id="rechargeBalanceVal">Br 0.00</div>
-          </div>
-
-          <!-- Quick Monetary Select Grid (2x3 Grid) -->
-          <div style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 8px; text-transform: uppercase;">Select Amount (Br)</div>
-          <div class="amount-grid-2col">
-            <button type="button" class="amount-option-btn" onclick="selectRechargeAmount(570, this)">570</button>
-            <button type="button" class="amount-option-btn" onclick="selectRechargeAmount(1770, this)">1,770</button>
-            <button type="button" class="amount-option-btn active" onclick="selectRechargeAmount(3770, this)">3,770</button>
-            <button type="button" class="amount-option-btn" onclick="selectRechargeAmount(7500, this)">7,500</button>
-            <button type="button" class="amount-option-btn" onclick="selectRechargeAmount(15000, this)">15,000</button>
-            <button type="button" class="amount-option-btn" onclick="selectRechargeAmount(30000, this)">30,000</button>
-          </div>
-
-          <!-- Payment Channel Chips -->
-          <div style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 8px; text-transform: uppercase;">Payment Channel</div>
-          <div class="payment-chips-row">
-            <div class="payment-chip active">
-              <span>Pay - N</span>
-              <span class="hot-badge">HOT</span>
-            </div>
-            <div class="payment-chip">
-              <span>Pay - W</span>
+            <div style="font-size: 15px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 8px;">
+              <span>Balance：</span>
+              <span style="font-weight: 700; color: var(--color-text-main);">Br &nbsp;<span id="rechargeBalanceVal">0.00</span></span>
             </div>
           </div>
+
+          <!-- Quick Monetary Select Grid (Preset Options: 600, 1800, 3800, 7800, 12800, 21800) -->
+          <div style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Select Amount (Br)</div>
+          <div class="amount-grid-2col" style="margin-bottom: 12px;">
+            <button type="button" class="amount-option-btn" data-amount="600" onclick="selectRechargeAmount(600, this)">600</button>
+            <button type="button" class="amount-option-btn" data-amount="1800" onclick="selectRechargeAmount(1800, this)">1,800</button>
+            <button type="button" class="amount-option-btn" data-amount="3800" onclick="selectRechargeAmount(3800, this)">3,800</button>
+            <button type="button" class="amount-option-btn" data-amount="7800" onclick="selectRechargeAmount(7800, this)">7,800</button>
+            <button type="button" class="amount-option-btn" data-amount="12800" onclick="selectRechargeAmount(12800, this)">12,800</button>
+            <button type="button" class="amount-option-btn" data-amount="21800" onclick="selectRechargeAmount(21800, this)">21,800</button>
+          </div>
+
+          <!-- Custom Amount Input (Below Presets) -->
+          <div style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Recharge Amount (Br)</div>
+          <div class="recharge-custom-input-box" id="rechargeInputBox">
+            <span class="recharge-currency-label">Br</span>
+            <input
+              type="number"
+              id="rechargeCustomInput"
+              class="recharge-custom-field"
+              min="600"
+              placeholder="Please enter the recharge amount"
+              oninput="handleCustomRechargeInput(this.value)"
+            >
+          </div>
+          <div id="rechargeAmountError" style="margin-top: 6px; font-size: 12px; color: #EF4444; display: none; padding-left: 4px;">Minimum recharge amount is Br 600.</div>
+
 
           <!-- Dynamic Pay Button -->
-          <button type="button" class="btn-primary-action" id="btnDynamicPay" style="margin-top: 24px;" onclick="triggerPayNowNoticeModal()">
-            Pay Br 3,770
+          <button type="button" class="btn-primary-action" id="btnDynamicPay" style="margin-top: 24px; opacity: 0.5;" disabled onclick="triggerPayNowNoticeModal()">
+            Recharge
           </button>
         </div>
 
@@ -1176,8 +1191,11 @@
 
         <div class="payment-method-item" onclick="openPaymentGateway('cbe')">
           <div class="payment-method-logo">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="10" fill="#FCD34D"/></svg>
-            Commercial Bank of Ethiopia
+            <div style="width: 52px; height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <img src="cbe_logo.png" alt="CBE Logo" style="width: 52px; height: 52px; object-fit: contain; display: block;">
+            </div>
+
+            <span style="font-family: var(--font-family); font-size: 15px; font-weight: 600; color: #1E293B;">Commercial Bank of Ethiopia</span>
           </div>
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="#CBD5E1" fill="none" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
@@ -1804,6 +1822,80 @@
             Change Password
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Action Input Modal (replaces all prompt() dialogs) -->
+  <div class="modal-overlay" id="adminActionModal" style="align-items:flex-end;">
+    <div class="admin-action-modal-sheet" id="adminActionModalSheet">
+      <div class="admin-modal-header">
+        <div class="admin-modal-icon-wrap" id="adminActionModalIcon">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="#FFF" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div class="admin-modal-title" id="adminActionModalTitle">Edit Balance</div>
+          <div class="admin-modal-subtitle" id="adminActionModalSubtitle">User: —</div>
+        </div>
+        <button class="admin-modal-close-btn" onclick="closeAdminActionModal()">✕</button>
+      </div>
+      <div class="admin-modal-current-row" id="adminActionCurrentRow">
+        <span class="admin-modal-current-label" id="adminActionCurrentLabel">Current Value</span>
+        <span class="admin-modal-current-value" id="adminActionCurrentValue">—</span>
+      </div>
+      <div class="admin-modal-input-wrap">
+        <span class="admin-modal-input-prefix" id="adminActionInputPrefix">Br</span>
+        <input type="text" id="adminActionInput" class="admin-modal-input-field" placeholder="Enter value" inputmode="decimal">
+      </div>
+      <div class="admin-modal-error" id="adminActionError" style="display:none;">⚠ Please enter a valid value</div>
+      <div class="admin-modal-btn-row">
+        <button class="admin-modal-btn admin-modal-btn-cancel" onclick="closeAdminActionModal()">Cancel</button>
+        <button class="admin-modal-btn admin-modal-btn-confirm" id="adminActionConfirmBtn" onclick="submitAdminAction()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Confirm Modal (replaces confirm() dialogs) -->
+  <div class="modal-overlay" id="adminConfirmModal" style="align-items:flex-end;">
+    <div class="admin-action-modal-sheet">
+      <div class="admin-modal-header">
+        <div class="admin-modal-icon-wrap" style="background:#EF4444;">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="#FFF" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div class="admin-modal-title" id="adminConfirmTitle">Confirm Action</div>
+          <div class="admin-modal-subtitle" id="adminConfirmSubtitle">This action cannot be undone.</div>
+        </div>
+      </div>
+      <div class="admin-confirm-message" id="adminConfirmMessage">Are you sure?</div>
+      <div class="admin-modal-btn-row">
+        <button class="admin-modal-btn admin-modal-btn-cancel" onclick="closeAdminConfirmModal()">Cancel</button>
+        <button class="admin-modal-btn" style="background:#EF4444;color:#FFF;flex:1;border-radius:10px;border:none;padding:13px;font-weight:700;font-size:14px;cursor:pointer;" id="adminConfirmActionBtn" onclick="submitAdminConfirm()">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin VIP Plan Edit Modal -->
+  <div class="modal-overlay" id="adminVipEditModal" style="align-items:flex-end;">
+    <div class="admin-action-modal-sheet">
+      <div class="admin-modal-header">
+        <div class="admin-modal-icon-wrap" style="background:#7C3AED;">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="#FFF" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div class="admin-modal-title" id="vipEditModalTitle">Edit VIP Plan</div>
+          <div class="admin-modal-subtitle" id="vipEditModalSubtitle">Update plan details</div>
+        </div>
+        <button class="admin-modal-close-btn" onclick="closeModal('adminVipEditModal')">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:4px;">
+        <div><label class="admin-modal-field-label">Price (Br)</label><input type="number" id="vipEditPrice" class="admin-modal-text-input" placeholder="e.g. 600" inputmode="decimal"></div>
+        <div><label class="admin-modal-field-label">Daily Income</label><input type="text" id="vipEditDaily" class="admin-modal-text-input" placeholder="e.g. 18"></div>
+        <div><label class="admin-modal-field-label">Duration</label><input type="text" id="vipEditDuration" class="admin-modal-text-input" placeholder="e.g. 160 Days"></div>
+      </div>
+      <div class="admin-modal-btn-row" style="margin-top:16px;">
+        <button class="admin-modal-btn admin-modal-btn-cancel" onclick="closeModal('adminVipEditModal')">Cancel</button>
+        <button class="admin-modal-btn admin-modal-btn-confirm" onclick="submitVipPlanEdit()">Save Changes</button>
       </div>
     </div>
   </div>

@@ -301,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyLanguage();
   renderAppView();
   checkAutoFillLogin();
+  checkUrlInviteCode();
   initHeroCarousel();
   checkAdminUrlTrigger();
   initializeDailyIncomeSystem();
@@ -386,59 +387,13 @@ function handleBrandHeaderClick() {
   }
 }
 
-// App Launch Splash Loading Screen Sequence with Controlled Loading Time
-function runAppLoadingSequence(totalDurationMs = 3000) {
+// App Loading Sequence — splash disabled, show app immediately
+function runAppLoadingSequence() {
   const splash = document.getElementById('appLoadingSplash');
-  const fill = document.getElementById('splashProgressFill');
-  const percentText = document.getElementById('splashPercentText');
-  const statusText = document.getElementById('splashStatusText');
-  const ringProgress = document.getElementById('splashRingProgress');
-
-  if (!splash) return;
-
-  // Explicitly reset the splash screen state to handle any browser cache / soft reloads
-  splash.classList.remove('fade-out');
-  
-  const circumference = 314; // 2 * PI * 50
-  
-  if (fill) fill.style.width = '0%';
-  if (percentText) percentText.innerText = '0%';
-  if (statusText) statusText.innerText = 'Loading portal... 0.0s';
-  if (ringProgress) ringProgress.style.strokeDashoffset = circumference;
-
-  const startTime = Date.now();
-
-  const interval = setInterval(() => {
-    const elapsedMs = Date.now() - startTime;
-    let progressRatio = elapsedMs / totalDurationMs;
-
-    if (progressRatio >= 1) {
-      progressRatio = 1;
-      clearInterval(interval);
-
-      updateProgressDisplay(100, (totalDurationMs / 1000).toFixed(1));
-
-      setTimeout(() => {
-        splash.classList.add('fade-out');
-      }, 400);
-    } else {
-      const currentPercent = Math.floor(progressRatio * 100);
-      const elapsedSec = (elapsedMs / 1000).toFixed(1);
-      updateProgressDisplay(currentPercent, elapsedSec);
-    }
-  }, 30);
-
-  function updateProgressDisplay(percent, seconds) {
-    if (fill) fill.style.width = `${percent}%`;
-    if (percentText) percentText.innerText = `${percent}%`;
-    if (statusText) statusText.innerText = `Loading portal... ${seconds}s`;
-
-    if (ringProgress) {
-      const offset = circumference - (circumference * percent) / 100;
-      ringProgress.style.strokeDashoffset = offset;
-    }
-  }
+  if (splash) splash.style.display = 'none';
 }
+
+
 
 // Toast Manager (Single Toast Instance - Prevents Overlay Stacking)
 function showToast(message, isError = false, duration = 2500) {
@@ -510,11 +465,79 @@ function generateUniqueCodeForPhone(phone) {
   return Math.abs(hash).toString(16).padStart(8, '0').substring(0, 8);
 }
 
-// Password Visibility Toggle
-function togglePassVisibility(inputId) {
+// Password Visibility Toggle with Accessible ARIA and Icon Swap
+function togglePassVisibility(inputId, btnEl) {
   const input = document.getElementById(inputId);
-  if (input) {
-    input.type = input.type === 'password' ? 'text' : 'password';
+  if (!input) return;
+
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+
+  if (btnEl) {
+    btnEl.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    const svgIcon = btnEl.querySelector('svg');
+    if (svgIcon) {
+      if (isPassword) {
+        // Slashed Eye SVG Icon (Hide password)
+        svgIcon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+      } else {
+        // Normal Open Eye SVG Icon (Show password)
+        svgIcon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+      }
+    }
+  }
+}
+
+// Check URL Query Parameter for Referral / Invite Code (?inviteCode=... or ?ref=...)
+function checkUrlInviteCode() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteCode = urlParams.get('inviteCode') || urlParams.get('ref') || urlParams.get('code');
+    if (inviteCode) {
+      const regInviteInput = document.getElementById('regInviteCodeInput');
+      if (regInviteInput) {
+        regInviteInput.value = inviteCode.trim();
+        console.log('Pre-filled invite code from URL:', inviteCode);
+      }
+    }
+  } catch (e) {
+    console.error('Error reading URL invite code:', e);
+  }
+}
+
+// Helper to display/clear inline field validation errors
+function setFieldError(containerId, errorId, show, errorText) {
+  const container = document.getElementById(containerId);
+  const errorEl = document.getElementById(errorId);
+  if (container) {
+    if (show) {
+      container.classList.add('input-error');
+    } else {
+      container.classList.remove('input-error');
+    }
+  }
+  if (errorEl) {
+    if (show) {
+      if (errorText) errorEl.innerText = errorText;
+      errorEl.style.display = 'block';
+    } else {
+      errorEl.style.display = 'none';
+    }
+  }
+}
+
+// Helper to set Primary Button Loading State
+function setButtonLoading(btnId, textSpanId, isLoading, defaultTextKey) {
+  const btn = document.getElementById(btnId);
+  const textSpan = document.getElementById(textSpanId);
+  if (!btn || !textSpan) return;
+
+  if (isLoading) {
+    btn.disabled = true;
+    textSpan.innerHTML = `<span class="btn-loading-spinner"></span> <span>Loading...</span>`;
+  } else {
+    btn.disabled = false;
+    textSpan.innerText = state.t(defaultTextKey);
   }
 }
 
@@ -551,6 +574,28 @@ function setupEventListeners() {
   if (switchToLoginLink) switchToLoginLink.addEventListener('click', () => setAuthMode('login'));
   if (switchToRegisterLink) switchToRegisterLink.addEventListener('click', () => setAuthMode('register'));
 
+  // Attach live input listeners to clear validation errors on typing
+  ['regMobileInput', 'regPassInput', 'regConfirmPassInput'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener('input', () => {
+        if (id === 'regMobileInput') setFieldError('regMobileContainer', 'regMobileError', false);
+        if (id === 'regPassInput') setFieldError('regPassContainer', 'regPassError', false);
+        if (id === 'regConfirmPassInput') setFieldError('regConfirmPassContainer', 'regConfirmPassError', false);
+      });
+    }
+  });
+
+  ['loginMobileInput', 'loginPassInput'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener('input', () => {
+        if (id === 'loginMobileInput') setFieldError('loginMobileContainer', 'loginMobileError', false);
+        if (id === 'loginPassInput') setFieldError('loginPassContainer', 'loginPassError', false);
+      });
+    }
+  });
+
   // Registration Form Submission (Unique Phone Check & Auto-Fill Login)
   const regForm = document.getElementById('regForm');
   if (regForm) {
@@ -561,36 +606,42 @@ function setupEventListeners() {
       const mobileVal = document.getElementById('regMobileInput').value.trim();
       const passVal = document.getElementById('regPassInput').value;
       const confirmPassVal = document.getElementById('regConfirmPassInput').value;
-      const inviteVal = document.getElementById('regInviteCodeInput').value.trim() || '150bc0d8';
+      const inviteVal = document.getElementById('regInviteCodeInput').value.trim() || 'f51380e';
 
-      console.log('Registration data:', { mobileVal, hasPassword: !!passVal, hasConfirmPassword: !!confirmPassVal, inviteVal });
+      // Clear previous error styles
+      setFieldError('regMobileContainer', 'regMobileError', false);
+      setFieldError('regPassContainer', 'regPassError', false);
+      setFieldError('regConfirmPassContainer', 'regConfirmPassError', false);
 
-      if (!mobileVal || !passVal || !confirmPassVal) {
-        console.error('Validation failed: Missing required fields');
-        showToast('Please fill in all required registration fields!', true);
-        return;
+      let hasError = false;
+
+      if (!mobileVal || mobileVal.length < 7) {
+        setFieldError('regMobileContainer', 'regMobileError', true, 'Please enter a valid phone number.');
+        hasError = true;
+      }
+
+      if (!passVal || passVal.length < 4) {
+        setFieldError('regPassContainer', 'regPassError', true, 'Password must be at least 4 characters.');
+        hasError = true;
       }
 
       if (passVal !== confirmPassVal) {
-        console.error('Validation failed: Passwords do not match');
-        showToast('Passwords do not match! Please check again.', true);
-        return;
+        setFieldError('regConfirmPassContainer', 'regConfirmPassError', true, 'Passwords do not match.');
+        hasError = true;
       }
 
+      if (hasError) return;
+
+      // Enable loading spinner state
+      setButtonLoading('regSubmitBtn', 'regSubmitBtnText', true, 'btnRegister');
+
       const fullMobile = `+251${mobileVal}`;
-      console.log('Firebase DB status:', db ? 'Connected' : 'Not connected (using localStorage)');
-      console.log('Firebase init error:', firebaseInitError);
 
       // Check global uniqueness on Firebase with new project
       let firebaseUserExists = false;
-      let firebaseCheckSuccess = false;
       
       if (db) {
         try {
-          console.log('Checking Firebase for existing user:', mobileVal);
-          console.log('Using Firebase project:', firebaseConfig.projectId);
-          
-          // Direct user check with 3-second timeout
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Firebase check timeout after 3s')), 3000);
           });
@@ -598,31 +649,25 @@ function setupEventListeners() {
           const firebasePromise = db.ref(`shambavest_state/registeredUsers/${mobileVal}`).once('value');
           const snap = await Promise.race([firebasePromise, timeoutPromise]);
           
-          console.log('Firebase check result:', snap.exists() ? 'User exists' : 'User does not exist');
-          firebaseCheckSuccess = true;
-          
           if (snap.exists()) {
             firebaseUserExists = true;
+            setFieldError('regMobileContainer', 'regMobileError', true, 'Phone number is already registered.');
+            setButtonLoading('regSubmitBtn', 'regSubmitBtnText', false, 'btnRegister');
             showToast('Phone number already exists on this platform!', true);
             return;
           }
         } catch (err) {
-          console.error('Firebase DB Check Error:', err.message);
-          firebaseCheckSuccess = false;
-          console.log('Firebase check failed, using localStorage only');
+          console.log('Firebase check bypassed, using local validation');
         }
-      } else {
-        console.log('Firebase not available, using localStorage only');
       }
       
       // Always run localStorage check as backup
-      console.log('Using localStorage check for existing user');
       if (state.registeredUsers[mobileVal] || state.registeredUsers[fullMobile]) {
-        showToast('Phone number already exists locally', true);
+        setFieldError('regMobileContainer', 'regMobileError', true, 'Phone number is already registered.');
+        setButtonLoading('regSubmitBtn', 'regSubmitBtnText', false, 'btnRegister');
+        showToast('Phone number already exists!', true);
         return;
       }
-      
-      console.log('Firebase check completed, success:', firebaseCheckSuccess);
 
       // Find referrers up to 3 levels deep based on inviteVal
       let l1ReferrerPhone = null;
@@ -630,14 +675,12 @@ function setupEventListeners() {
       let l3ReferrerPhone = null;
 
       if (inviteVal) {
-        console.log('Searching for referrer with code:', inviteVal);
         for (let uPhone in state.registeredUsers) {
           const u = state.registeredUsers[uPhone];
           if (u.inviteCode === inviteVal || u.referralCode === inviteVal) {
             l1ReferrerPhone = u.mobile;
             l2ReferrerPhone = u.level1Referrer || null;
             l3ReferrerPhone = u.level2Referrer || null;
-            console.log('Found referrer:', l1ReferrerPhone);
             break;
           }
         }
@@ -645,7 +688,6 @@ function setupEventListeners() {
 
       // Create new user object
       const userUniqueCode = generateUniqueCodeForPhone(mobileVal);
-      console.log('Generated unique code:', userUniqueCode);
       
       const newUser = {
         mobile: mobileVal,
@@ -666,28 +708,18 @@ function setupEventListeners() {
         history: []
       };
 
-      console.log('New user object created:', newUser);
-
       // Save user to directory
       state.registeredUsers[mobileVal] = newUser;
-      console.log('User saved to registeredUsers');
-      
-      // Sync adminUsersList from registeredUsers to ensure only real users are shown
       state.syncAdminUsersListFromRegisteredUsers();
-      console.log('Admin users list synced from registered users');
-
-      // Save draft user for auto-fill on login form
       state.draftUser = { mobile: mobileVal, password: passVal };
-      console.log('Saving state to localStorage and Firebase...');
       state.save();
-      console.log('State saved successfully');
 
-      showToast('Registration successful! Phone number and password auto-filled below. Click Login to enter.');
-
-      // Switch to Login Mode & Auto-fill inputs
-      setAuthMode('login');
-      checkAutoFillLogin();
-      console.log('=== Registration Completed Successfully ===');
+      setTimeout(() => {
+        setButtonLoading('regSubmitBtn', 'regSubmitBtnText', false, 'btnRegister');
+        showToast('Registration successful! Phone number and password auto-filled. Click Login to proceed.');
+        setAuthMode('login');
+        checkAutoFillLogin();
+      }, 400);
     });
   }
 
@@ -699,19 +731,37 @@ function setupEventListeners() {
       const mobileVal = document.getElementById('loginMobileInput').value.trim();
       const passVal = document.getElementById('loginPassInput').value;
 
-      if (!mobileVal || !passVal) {
-        showToast('Please enter your phone number and password!', true);
-        return;
+      setFieldError('loginMobileContainer', 'loginMobileError', false);
+      setFieldError('loginPassContainer', 'loginPassError', false);
+
+      let hasError = false;
+
+      if (!mobileVal) {
+        setFieldError('loginMobileContainer', 'loginMobileError', true, 'Please enter your phone number.');
+        hasError = true;
       }
+
+      if (!passVal) {
+        setFieldError('loginPassContainer', 'loginPassError', true, 'Please enter your password.');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      setButtonLoading('loginSubmitBtn', 'loginSubmitBtnText', true, 'btnLogin');
 
       // Check credentials in directory
       const existingUser = state.registeredUsers[mobileVal];
       if (!existingUser) {
+        setFieldError('loginMobileContainer', 'loginMobileError', true, 'Account not found. Please register first.');
+        setButtonLoading('loginSubmitBtn', 'loginSubmitBtnText', false, 'btnLogin');
         showToast('Account not found! Please register first.', true);
         return;
       }
 
       if (existingUser.password !== passVal) {
+        setFieldError('loginPassContainer', 'loginPassError', true, 'Incorrect password. Please try again.');
+        setButtonLoading('loginSubmitBtn', 'loginSubmitBtnText', false, 'btnLogin');
         showToast('Incorrect password! Please try again.', true);
         return;
       }
@@ -721,18 +771,34 @@ function setupEventListeners() {
       state.activeTab = 'home';
       state.save();
 
-      // Recalculate total income on login to ensure accuracy
       recalculateTotalIncome(existingUser);
 
-      renderAppView();
-      showToast(`Welcome back, +251 ${mobileVal}!`);
-
-      // Trigger Announcement Modal on login
       setTimeout(() => {
-        openModal('announcementModal');
-      }, 500);
+        setButtonLoading('loginSubmitBtn', 'loginSubmitBtnText', false, 'btnLogin');
+        renderAppView();
+        showToast(`Welcome back, +251 ${mobileVal}!`);
+        setTimeout(() => openModal('announcementModal'), 500);
+      }, 300);
     });
   }
+
+  // Position active tab underline bar on window resize
+  window.addEventListener('resize', () => {
+    updateTabUnderlinePosition(state.authMode);
+  });
+}
+
+// Position active tab underline bar
+function updateTabUnderlinePosition(mode) {
+  const line = document.getElementById('authTabUnderline');
+  const btnAuthLogin = document.getElementById('btnAuthLogin');
+  const btnAuthRegister = document.getElementById('btnAuthRegister');
+
+  if (!line || !btnAuthLogin || !btnAuthRegister) return;
+
+  const targetBtn = mode === 'login' ? btnAuthLogin : btnAuthRegister;
+  line.style.left = `${targetBtn.offsetLeft}px`;
+  line.style.width = `${targetBtn.offsetWidth}px`;
 }
 
 // Switch Auth View Mode (Login vs Register)
@@ -742,24 +808,35 @@ function setAuthMode(mode) {
   const btnAuthRegister = document.getElementById('btnAuthRegister');
   const regForm = document.getElementById('regForm');
   const loginForm = document.getElementById('loginForm');
-  const heading = document.getElementById('authHeadingText');
-  const subheading = document.getElementById('authSubheadingText');
 
   if (mode === 'login') {
-    btnAuthLogin.classList.add('active');
-    btnAuthRegister.classList.remove('active');
+    if (btnAuthLogin) {
+      btnAuthLogin.classList.add('active');
+      btnAuthLogin.setAttribute('aria-selected', 'true');
+    }
+    if (btnAuthRegister) {
+      btnAuthRegister.classList.remove('active');
+      btnAuthRegister.setAttribute('aria-selected', 'false');
+    }
     if (regForm) regForm.style.display = 'none';
     if (loginForm) loginForm.style.display = 'block';
-    if (heading) heading.innerText = state.t('tabLogin');
-    if (subheading) subheading.innerText = 'Log in with your registered phone number & password';
   } else {
-    btnAuthRegister.classList.add('active');
-    btnAuthLogin.classList.remove('active');
+    if (btnAuthRegister) {
+      btnAuthRegister.classList.add('active');
+      btnAuthRegister.setAttribute('aria-selected', 'true');
+    }
+    if (btnAuthLogin) {
+      btnAuthLogin.classList.remove('active');
+      btnAuthLogin.setAttribute('aria-selected', 'false');
+    }
     if (regForm) regForm.style.display = 'block';
     if (loginForm) loginForm.style.display = 'none';
-    if (heading) heading.innerText = state.t('tabRegister');
-    if (subheading) subheading.innerText = 'Join Twiga Soko Yetu to start earning daily returns';
   }
+
+  // Update animated underline position
+  setTimeout(() => {
+    updateTabUnderlinePosition(mode);
+  }, 10);
 }
 
 // Check Auto Fill Login Credentials
@@ -771,6 +848,9 @@ function checkAutoFillLogin() {
     if (loginMobileInput) loginMobileInput.value = state.draftUser.mobile;
     if (loginPassInput) loginPassInput.value = state.draftUser.password;
   }
+  
+  // Set initial tab underline position
+  updateTabUnderlinePosition(state.authMode || 'register');
 }
 
 // Language Bottom Sheet Handlers
@@ -860,11 +940,11 @@ function renderAppView() {
     }
   }
 
-  // Hide top navbar on home and profile pages
+  // Hide top navbar on auth, home, and profile pages, or when unauthenticated
   const topHeader = document.getElementById('topHeader');
   if (topHeader) {
-    if (state.activeTab === 'home' || state.activeTab === 'profile') {
-      topHeader.style.display = 'none';
+    if (!state.currentUser || state.activeTab === 'auth' || state.activeTab === 'home' || state.activeTab === 'profile') {
+      topHeader.style.setProperty('display', 'none', 'important');
     } else {
       topHeader.style.display = 'flex';
     }
@@ -903,15 +983,81 @@ function openRechargeScreen() {
 
 function selectRechargeAmount(amount, element) {
   state.rechargeAmount = amount;
-  
+
   document.querySelectorAll('.amount-option-btn').forEach(btn => btn.classList.remove('active'));
   if (element) element.classList.add('active');
 
+  // Fill and focus the custom input field
+  const customInput = document.getElementById('rechargeCustomInput');
+  if (customInput) {
+    customInput.value = amount;
+  }
+
+  // Clear any error state
+  const errEl = document.getElementById('rechargeAmountError');
+  const inputBox = document.getElementById('rechargeInputBox');
+  if (errEl) errEl.style.display = 'none';
+  if (inputBox) inputBox.classList.remove('input-error');
+
+  // Update Pay button immediately
   const btn = document.getElementById('btnDynamicPay');
   if (btn) {
     btn.innerText = `Pay Br ${amount.toLocaleString()}`;
+    btn.disabled = false;
+    btn.style.opacity = '1';
   }
 }
+
+// Custom amount input handler (free-type, minimum Br 600)
+function handleCustomRechargeInput(val) {
+  const amount = parseFloat(val);
+  const errEl = document.getElementById('rechargeAmountError');
+  const inputBox = document.getElementById('rechargeInputBox');
+  const btn = document.getElementById('btnDynamicPay');
+
+  // Deselect all preset buttons when typing custom
+  document.querySelectorAll('.amount-option-btn').forEach(b => b.classList.remove('active'));
+
+  // Empty field — reset pay button to default label
+  if (!val || val.trim() === '') {
+    if (errEl) errEl.style.display = 'none';
+    if (inputBox) inputBox.classList.remove('input-error');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.innerText = 'Pay Br —';
+    }
+    return;
+  }
+
+  if (isNaN(amount) || amount < 600) {
+    if (errEl) errEl.style.display = 'block';
+    if (inputBox) inputBox.classList.add('input-error');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.innerText = 'Minimum Br 600';
+    }
+    return;
+  }
+
+  // Valid amount
+  if (errEl) errEl.style.display = 'none';
+  if (inputBox) inputBox.classList.remove('input-error');
+  state.rechargeAmount = amount;
+
+  // Highlight matching preset button if value matches exactly
+  document.querySelectorAll('.amount-option-btn').forEach(b => {
+    if (parseInt(b.dataset.amount) === amount) b.classList.add('active');
+  });
+
+  if (btn) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.innerText = `Pay Br ${amount.toLocaleString()}`;
+  }
+}
+
 
 function parseNum(val) {
   if (typeof val === 'number') return val;
@@ -1259,6 +1405,9 @@ function renderProfileView() {
   if (vipEl) vipEl.innerText = user.vipLevel || 'VIP0';
   if (balSummaryEl) balSummaryEl.innerText = user.balance > 0 ? `Br ${user.balance.toFixed(0)}` : '0';
   if (incomeSummaryEl) incomeSummaryEl.innerText = user.accumulatedYield > 0 ? `Br ${user.accumulatedYield.toFixed(0)}` : '0';
+
+  // Start profile page carousel auto-slide
+  startProfileCarousel();
 }
 
 // Render Balance Details Subpage View (Image 3 Reference)
@@ -1940,14 +2089,14 @@ function saveBindWallet() {
   openSubpage('withdraw');
 }
 
-// Customer Support Modal Handler
+// Customer Support Telegram Link Handler (@shambavest1)
 function openServiceModal() {
-  alert('Customer Service Hotline:\nTelegram: @ShambaVestSupport\nAvailable 24/7 for deposit & withdrawal inquiries.');
+  window.open('https://t.me/shambavest1', '_blank');
 }
 
-// Telegram Channel Handler
+// Telegram Official Channel Invite Link Handler
 function openChannelLink() {
-  window.open('https://t.me/ShambaVestChannel', '_blank');
+  window.open('https://t.me/+1QX2V18acUE5Y2I0', '_blank');
 }
 
 // Floating Treasure Bonus FAB Handler
@@ -2496,6 +2645,11 @@ function renderAdminUsers(filterQuery = '') {
           <button type="button" class="btn-user-act btn-user-act-login" data-tooltip="Login as this user" onclick="adminLoginAsUser('${u.phone}')">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           </button>
+
+          <!-- 1b. Edit Balance (Teal) -->
+          <button type="button" class="btn-user-act btn-user-act-balance" data-tooltip="Set exact balance" onclick="adminEditUserBalance('${u.phone}')">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </button>
           
           <!-- 2. Gift Bonus (Purple) -->
           <button type="button" class="btn-user-act btn-user-act-bonus" data-tooltip="Add bonus to user" onclick="adminGiveUserBonus('${u.phone}')">
@@ -2557,112 +2711,238 @@ function adminLoginAsUser(phone) {
   showToast(`🔑 Logged in as user +251 ${phone}!`);
 }
 
-function adminGiveUserBonus(phone) {
-  const bonusStr = prompt(`Enter bonus amount to add for user ${phone} (ETB):`, '500');
-  if (!bonusStr || isNaN(bonusStr) || parseFloat(bonusStr) <= 0) return;
+// =============================================
+// ADMIN MODAL CONTROLLER (replaces all prompt/confirm)
+// =============================================
+let _adminActionCallback = null;
+let _adminConfirmCallback = null;
+let _vipEditIndex = null;
 
-  const bonus = parseFloat(bonusStr);
-  const userItem = state.adminUsersList.find(u => u.phone === phone);
-  if (userItem) {
-    userItem.rawBalance += bonus;
-    userItem.balance = `${userItem.rawBalance.toFixed(2)} ETB`;
+// Robust user lookup: tries direct key first, then searches by mobile property
+function findRegisteredUser(phone) {
+  // Direct key match (most common case)
+  if (state.registeredUsers[phone]) return { key: phone, user: state.registeredUsers[phone] };
+  // Fallback: search all users by mobile property
+  for (const key in state.registeredUsers) {
+    const u = state.registeredUsers[key];
+    if (u.mobile === phone || u.fullMobile === phone || key.includes(phone) || (phone && phone.includes(key))) {
+      return { key, user: u };
+    }
   }
-  if (state.registeredUsers[phone]) {
-    state.registeredUsers[phone].balance += bonus;
+  return null;
+}
+
+function openAdminActionModal({ title, subtitle, currentLabel, currentValue, inputPrefix = 'Br', placeholder = 'Enter value', iconBg = '#0D9488', onConfirm }) {
+  document.getElementById('adminActionModalTitle').innerText = title;
+  document.getElementById('adminActionModalSubtitle').innerText = subtitle;
+  document.getElementById('adminActionCurrentLabel').innerText = currentLabel;
+  document.getElementById('adminActionCurrentValue').innerText = currentValue;
+  document.getElementById('adminActionInputPrefix').innerText = inputPrefix;
+  document.getElementById('adminActionInput').value = '';
+  document.getElementById('adminActionInput').placeholder = placeholder;
+  document.getElementById('adminActionError').style.display = 'none';
+  document.getElementById('adminActionModalIcon').style.background = iconBg;
+  _adminActionCallback = onConfirm;
+  document.getElementById('adminActionModal').classList.add('show');
+  setTimeout(() => document.getElementById('adminActionInput').focus(), 300);
+}
+
+function closeAdminActionModal() {
+  document.getElementById('adminActionModal').classList.remove('show');
+  _adminActionCallback = null;
+}
+
+function submitAdminAction() {
+  const val = document.getElementById('adminActionInput').value.trim();
+  const errEl = document.getElementById('adminActionError');
+  if (!val) {
+    errEl.innerText = '⚠ Please enter a value';
+    errEl.style.display = 'block';
+    return;
   }
-  state.save();
-  showToast(`🎁 Added ETB ${bonus.toFixed(2)} bonus to user ${phone}!`);
-  renderAdminUsers();
+  if (_adminActionCallback) {
+    const result = _adminActionCallback(val);
+    if (result === false) return; // callback returned false = validation failed
+  }
+  closeAdminActionModal();
+}
+
+function openAdminConfirmModal({ title, subtitle, message, confirmLabel = 'Confirm', onConfirm }) {
+  document.getElementById('adminConfirmTitle').innerText = title;
+  document.getElementById('adminConfirmSubtitle').innerText = subtitle;
+  document.getElementById('adminConfirmMessage').innerText = message;
+  document.getElementById('adminConfirmActionBtn').innerText = confirmLabel;
+  _adminConfirmCallback = onConfirm;
+  document.getElementById('adminConfirmModal').classList.add('show');
+}
+
+function closeAdminConfirmModal() {
+  document.getElementById('adminConfirmModal').classList.remove('show');
+  _adminConfirmCallback = null;
+}
+
+function submitAdminConfirm() {
+  if (_adminConfirmCallback) _adminConfirmCallback();
+  closeAdminConfirmModal();
+}
+
+// =============================================
+// ADMIN USER ACTION FUNCTIONS (Modal-based)
+// =============================================
+
+function adminGiveUserBonus(phone) {
+  const found = findRegisteredUser(phone);
+  if (!found) { showToast('User not found!', true); return; }
+  const { key, user } = found;
+  const current = (user.balance || 0).toFixed(2);
+  openAdminActionModal({
+    title: 'Gift Bonus',
+    subtitle: `User: +251 ${phone}`,
+    currentLabel: 'Current Balance',
+    currentValue: `Br ${current}`,
+    inputPrefix: 'Br',
+    placeholder: 'Enter bonus amount',
+    iconBg: '#A855F7',
+    onConfirm: (val) => {
+      const bonus = parseFloat(val);
+      if (isNaN(bonus) || bonus <= 0) {
+        document.getElementById('adminActionError').innerText = '⚠ Enter a valid bonus amount > 0';
+        document.getElementById('adminActionError').style.display = 'block';
+        return false;
+      }
+      user.balance = (user.balance || 0) + bonus;
+      const userItem = state.adminUsersList.find(u => u.phone === phone);
+      if (userItem) { userItem.rawBalance = user.balance; userItem.balance = `Br ${user.balance.toFixed(2)}`; }
+      if (state.currentUser && (state.currentUser.mobile === phone || state.currentUser.mobile === key)) state.currentUser.balance = user.balance;
+      state.save();
+      showToast(`🎁 Added Br ${bonus.toFixed(2)} bonus to user ${phone}!`);
+      renderAdminUsers();
+    }
+  });
+}
+
+// Edit User Balance — Admin sets exact balance
+function adminEditUserBalance(phone) {
+  const found = findRegisteredUser(phone);
+  if (!found) { showToast('User not found!', true); return; }
+  const { key, user } = found;
+  const current = (user.balance || 0).toFixed(2);
+  openAdminActionModal({
+    title: 'Edit Balance',
+    subtitle: `User: +251 ${phone}`,
+    currentLabel: 'Current Balance',
+    currentValue: `Br ${current}`,
+    inputPrefix: 'Br',
+    placeholder: 'Enter exact balance',
+    iconBg: '#0D9488',
+    onConfirm: (val) => {
+      const newBal = parseFloat(val);
+      if (isNaN(newBal) || newBal < 0) {
+        document.getElementById('adminActionError').innerText = '⚠ Enter a valid amount ≥ 0';
+        document.getElementById('adminActionError').style.display = 'block';
+        return false;
+      }
+      user.balance = newBal;
+      const userItem = state.adminUsersList.find(u => u.phone === phone);
+      if (userItem) { userItem.rawBalance = newBal; userItem.balance = `Br ${newBal.toFixed(2)}`; }
+      if (state.currentUser && (state.currentUser.mobile === phone || state.currentUser.mobile === key)) state.currentUser.balance = newBal;
+      state.save();
+      showToast(`✅ Balance for ${phone} set to Br ${newBal.toFixed(2)}!`);
+      renderAdminUsers();
+    }
+  });
 }
 
 function adminEditUserIncome(phone) {
-  const user = state.registeredUsers[phone];
-  if (!user) {
-    showToast('User not found!', true);
-    return;
-  }
-
-  const currentIncome = user.accumulatedYield || 0;
-  const newIncomeStr = prompt(`Current total income for user ${phone}: ${currentIncome.toFixed(2)} ETB\n\nEnter new total income amount:`, currentIncome.toFixed(2));
-  
-  if (!newIncomeStr || isNaN(newIncomeStr) || parseFloat(newIncomeStr) < 0) return;
-
-  const newIncome = parseFloat(newIncomeStr);
-  user.accumulatedYield = newIncome;
-  
-  // Update admin users list if exists
-  const userItem = state.adminUsersList.find(u => u.phone === phone);
-  if (userItem) {
-    userItem.accumulatedYield = newIncome;
-  }
-  
-  state.save();
-  showToast(`✅ Total income for user ${phone} updated to ${newIncome.toFixed(2)} ETB!`);
-  renderAdminUsers();
+  const found = findRegisteredUser(phone);
+  if (!found) { showToast('User not found!', true); return; }
+  const { key, user } = found;
+  const current = (user.accumulatedYield || 0).toFixed(2);
+  openAdminActionModal({
+    title: 'Edit Total Income',
+    subtitle: `User: +251 ${phone}`,
+    currentLabel: 'Current Income',
+    currentValue: `Br ${current}`,
+    inputPrefix: 'Br',
+    placeholder: 'Enter new total income',
+    iconBg: '#059669',
+    onConfirm: (val) => {
+      const newIncome = parseFloat(val);
+      if (isNaN(newIncome) || newIncome < 0) {
+        document.getElementById('adminActionError').innerText = '⚠ Enter a valid amount ≥ 0';
+        document.getElementById('adminActionError').style.display = 'block';
+        return false;
+      }
+      user.accumulatedYield = newIncome;
+      const userItem = state.adminUsersList.find(u => u.phone === phone);
+      if (userItem) userItem.accumulatedYield = newIncome;
+      if (state.currentUser && (state.currentUser.mobile === phone || state.currentUser.mobile === key)) state.currentUser.accumulatedYield = newIncome;
+      state.save();
+      showToast(`✅ Income for ${phone} updated to Br ${newIncome.toFixed(2)}!`);
+      renderAdminUsers();
+    }
+  });
 }
 
 function adminRemoveUserProducts(phone) {
-  const user = state.registeredUsers[phone];
-  if (!user) {
-    showToast('User not found!', true);
-    return;
-  }
-
+  const found = findRegisteredUser(phone);
+  if (!found) { showToast('User not found!', true); return; }
+  const { user } = found;
   if (!user.activePlans || user.activePlans.length === 0) {
-    showToast('User has no active products to remove.', true);
-    return;
+    showToast('User has no active products to remove.', true); return;
   }
-
-  // Show list of active products
-  const productList = user.activePlans.map((plan, index) => 
-    `${index + 1}. ${plan.name} - ${plan.daily} daily (${plan.daysLeft} days left)`
-  ).join('\n');
-  
-  const choice = prompt(`User ${phone} has the following active products:\n\n${productList}\n\nEnter the number of the product to remove (or 'all' to remove all):`);
-  
-  if (!choice) return;
-
-  if (choice.toLowerCase() === 'all') {
-    if (!confirm(`Are you sure you want to remove ALL products from user ${phone}?`)) return;
-    user.activePlans = [];
-    showToast(`✅ All products removed from user ${phone}!`);
-  } else {
-    const index = parseInt(choice) - 1;
-    if (isNaN(index) || index < 0 || index >= user.activePlans.length) {
-      showToast('Invalid product number!', true);
-      return;
+  openAdminConfirmModal({
+    title: 'Remove Products',
+    subtitle: `User: +251 ${phone}`,
+    message: `This user has ${user.activePlans.length} active plan(s): ${user.activePlans.map((p,i) => `${i+1}. ${p.name}`).join(', ')}. All plans will be removed.`,
+    confirmLabel: 'Remove All',
+    onConfirm: () => {
+      user.activePlans = [];
+      state.save();
+      showToast(`✅ All products removed from user ${phone}!`);
+      renderAdminUsers();
     }
-    
-    const removedPlan = user.activePlans[index];
-    if (!confirm(`Are you sure you want to remove ${removedPlan.name} from user ${phone}?`)) return;
-    
-    user.activePlans.splice(index, 1);
-    showToast(`✅ ${removedPlan.name} removed from user ${phone}!`);
-  }
-
-  state.save();
-  renderAdminUsers();
+  });
 }
 
 function adminResetUserPassword(phone) {
-  const newPass = prompt(`Enter new password for user ${phone}:`, '123456');
-  if (!newPass) return;
-
-  if (state.registeredUsers[phone]) {
-    state.registeredUsers[phone].password = newPass;
-    state.save();
-  }
-  showToast(`🔑 Password for user ${phone} reset to "${newPass}"!`);
+  const found = findRegisteredUser(phone);
+  openAdminActionModal({
+    title: 'Reset Password',
+    subtitle: `User: +251 ${phone}`,
+    currentLabel: 'Action',
+    currentValue: 'Set new password',
+    inputPrefix: '🔑',
+    placeholder: 'Enter new password',
+    iconBg: '#D97706',
+    onConfirm: (val) => {
+      if (!val || val.length < 4) {
+        document.getElementById('adminActionError').innerText = '⚠ Password must be at least 4 characters';
+        document.getElementById('adminActionError').style.display = 'block';
+        return false;
+      }
+      if (found) found.user.password = val;
+      state.save();
+      showToast(`🔑 Password for ${phone} reset successfully!`);
+    }
+  });
 }
 
 function adminDeleteUser(phone) {
-  if (!confirm(`Are you sure you want to delete/ban user ${phone}?`)) return;
-
-  state.adminUsersList = state.adminUsersList.filter(u => u.phone !== phone);
-  delete state.registeredUsers[phone];
-  state.save();
-  showToast(`🗑️ User ${phone} deleted successfully!`);
-  renderAdminUsers();
+  const found = findRegisteredUser(phone);
+  openAdminConfirmModal({
+    title: 'Delete User',
+    subtitle: 'This cannot be undone',
+    message: `Are you sure you want to permanently delete/ban user +251 ${phone}? All their data will be removed.`,
+    confirmLabel: '🗑️ Delete',
+    onConfirm: () => {
+      state.adminUsersList = state.adminUsersList.filter(u => u.phone !== phone);
+      if (found) delete state.registeredUsers[found.key];
+      state.save();
+      showToast(`🗑️ User ${phone} deleted successfully!`);
+      renderAdminUsers();
+    }
+  });
 }
 
 function adminChangePassword() {
@@ -2765,18 +3045,27 @@ function toggleVipStatus(index) {
 function editVipPlan(index) {
   const plan = state.adminVipPlans[index];
   if (!plan) return;
+  _vipEditIndex = index;
+  document.getElementById('vipEditModalTitle').innerText = `Edit ${plan.name}`;
+  document.getElementById('vipEditModalSubtitle').innerText = 'Update price, daily income and duration';
+  document.getElementById('vipEditPrice').value = plan.price || '';
+  document.getElementById('vipEditDaily').value = plan.daily || '';
+  document.getElementById('vipEditDuration').value = plan.duration || '160 Days';
+  document.getElementById('adminVipEditModal').classList.add('show');
+}
 
-  const newPrice = prompt(`Enter new Price for ${plan.name}:`, plan.price);
-  if (!newPrice) return;
-  const newDaily = prompt(`Enter new Daily Income for ${plan.name}:`, plan.daily);
-  if (!newDaily) return;
-  const newDuration = prompt(`Enter new Duration for ${plan.name}:`, plan.duration || '160 Days');
-  if (!newDuration) return;
-
-  plan.price = newPrice;
-  plan.daily = newDaily;
-  plan.duration = newDuration;
+function submitVipPlanEdit() {
+  const plan = state.adminVipPlans[_vipEditIndex];
+  if (!plan) return;
+  const price = document.getElementById('vipEditPrice').value.trim();
+  const daily = document.getElementById('vipEditDaily').value.trim();
+  const duration = document.getElementById('vipEditDuration').value.trim();
+  if (!price || !daily || !duration) { showToast('Please fill all fields!', true); return; }
+  plan.price = price;
+  plan.daily = daily;
+  plan.duration = duration;
   state.save();
+  document.getElementById('adminVipEditModal').classList.remove('show');
   showToast(`✅ ${plan.name} updated successfully!`);
   renderAdminVip();
   renderVipButtons();
