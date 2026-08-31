@@ -675,9 +675,16 @@ function setupEventListeners() {
       let l3ReferrerPhone = null;
 
       if (inviteVal) {
+        const cleanVal = inviteVal.trim();
         for (let uPhone in state.registeredUsers) {
           const u = state.registeredUsers[uPhone];
-          if (u.inviteCode === inviteVal || u.referralCode === inviteVal) {
+          if (
+            u.inviteCode === cleanVal || 
+            u.referralCode === cleanVal || 
+            u.mobile === cleanVal || 
+            u.fullMobile === cleanVal ||
+            (cleanVal.length >= 3 && (u.mobile.includes(cleanVal) || (u.fullMobile && u.fullMobile.includes(cleanVal))))
+          ) {
             l1ReferrerPhone = u.mobile;
             l2ReferrerPhone = u.level1Referrer || null;
             l3ReferrerPhone = u.level2Referrer || null;
@@ -1207,19 +1214,36 @@ function openPaymentGateway(method) {
   }, 1000);
 }
 
+function finishPaymentSuccess() {
+  closeModal('paymentSuccessModal');
+  switchTab('home');
+}
+
 function submitGatewayPayment() {
-  const receipt = document.getElementById('gwReceiptInput').value;
+  const receiptInput = document.getElementById('gwReceiptInput');
+  const receipt = receiptInput ? receiptInput.value : '';
+
   if (!receipt || receipt.trim() === '') {
-    showToast('Please enter the payment receipt or SMS text.');
+    showToast('Please enter or paste the payment receipt / SMS text.', true);
     return;
   }
 
   const depositAmount = state.rechargeAmount || 970;
-  if (!state.currentUser) return;
+
+  if (!state.currentUser) {
+    state.currentUser = {
+      mobile: '0900000000',
+      fullMobile: '0900000000',
+      balance: 0,
+      history: [],
+      rechargeHistory: []
+    };
+  }
 
   const user = state.currentUser;
-  const userPhone = user.fullMobile || user.mobile;
-  const channelName = document.getElementById('gwChannelName').innerText;
+  const userPhone = user.fullMobile || user.mobile || '0900000000';
+  const channelEl = document.getElementById('gwChannelName');
+  const channelName = channelEl ? channelEl.innerText : 'Commercial Bank of Ethiopia';
   const bankName = channelName.includes('Telebirr') ? 'Telebirr' : 'CBE';
   const depId = `dep_${Date.now()}`;
 
@@ -1230,14 +1254,16 @@ function submitGatewayPayment() {
     amount: `${depositAmount.toFixed(2)} ETB`,
     rawAmount: depositAmount,
     bank: bankName,
-    txId: receipt,
+    txId: receipt.trim(),
     status: 'Pending',
     createdAt: new Date().toISOString()
   };
 
+  if (!state.adminDeposits) state.adminDeposits = [];
   state.adminDeposits.unshift(newDepRequest);
 
   // Add PENDING deposit to user history
+  if (!user.history) user.history = [];
   user.history.unshift({
     id: depId,
     type: `Deposit (${bankName})`,
@@ -1246,20 +1272,45 @@ function submitGatewayPayment() {
     status: 'PENDING'
   });
 
-  state.registeredUsers[user.mobile] = user;
+  if (state.registeredUsers && user.mobile) {
+    state.registeredUsers[user.mobile] = user;
+  }
   state.save();
 
-  showToast(`✅ Deposit of ETB ${depositAmount.toFixed(2)} submitted to Admin! Status: Pending Approval.`);
-  
-  // Clean up
-  document.getElementById('gwReceiptInput').value = '';
+  // Clean up input & timer
+  if (receiptInput) receiptInput.value = '';
   if (paymentTimerInterval) clearInterval(paymentTimerInterval);
   
+  // Hide payment gateway view
+  const gwView = document.getElementById('paymentGatewayView');
+  if (gwView) gwView.style.display = 'none';
+
   // Show bottom nav bar again
   const navBar = document.querySelector('.bottom-nav-bar');
   if (navBar) navBar.style.display = 'flex';
 
-  switchTab('home');
+  // Display prominent success toast message
+  showToast(`✅ Payment Submitted Successfully! Deposit of ETB ${depositAmount.toFixed(2)} is pending approval.`, false, 4500);
+
+  // Set modal message and display success modal
+  const msgEl = document.getElementById('paymentSuccessModalMsg');
+  if (msgEl) {
+    msgEl.innerHTML = `Your payment request of <strong style="color:#0F172A;">ETB ${depositAmount.toFixed(2)}</strong> via <strong>${bankName}</strong> has been submitted successfully!<br><br><span style="color:#D97706; font-size:13px; font-weight:700;">Status: PENDING APPROVAL</span>`;
+  }
+  
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      icon: 'success',
+      title: 'Submission Successful! / ማስረከብ ተሳክቷል!',
+      html: `Your payment request of <b>ETB ${depositAmount.toFixed(2)}</b> (${bankName}) has been submitted successfully.<br><br><span style="color:#D97706; font-weight:bold;">Status: Pending Approval</span>`,
+      confirmButtonColor: '#10B981',
+      confirmButtonText: 'OK / ተረድቻለሁ'
+    }).then(() => {
+      switchTab('home');
+    });
+  } else {
+    openModal('paymentSuccessModal');
+  }
 }
 
 // Helper for fallback product images
@@ -1279,7 +1330,7 @@ function getPlanImage(name) {
   return 'plan_b.png';
 }
 
-// Render Income View Details (Exact Home Page Card Layout)
+// Render Income View Details (With Balance, Total Income, Approved Products & Pending Approvals)
 function renderIncomeView() {
   if (!state.currentUser) return;
   const user = state.currentUser;
@@ -1287,16 +1338,76 @@ function renderIncomeView() {
 
   if (!container) return;
 
-  if (!user.activePlans || user.activePlans.length === 0) {
-    container.innerHTML = `
-      <div class="income-empty-state">
-        <div class="income-empty-watermark">NO DATA</div>
+  const userBalance = parseNum(user.balance || 0);
+  const userIncome = parseNum(user.accumulatedYield || 0);
+  const activePlans = user.activePlans || [];
+  const pendingPlans = user.pendingPlans || [];
+
+  let totalDailyYield = 0;
+  activePlans.forEach(plan => {
+    totalDailyYield += parseNum(plan.daily || 0);
+  });
+
+  const balFormatted = `Br ${userBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  const incFormatted = `Br ${userIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+  let html = `
+    <div class="income-view-wrapper" style="padding: 16px;">
+      
+      <!-- Top Hero Summary Card: Balance & Total Income (Reflects Admin Edits & Approved Product Earnings) -->
+      <div class="income-hero-summary-card" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 16px; padding: 20px; color: #FFF; margin-bottom: 20px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 14px;">
+          <div>
+            <div style="font-size: 12px; color: #94A3B8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Current Balance</div>
+            <div style="font-size: 24px; font-weight: 800; color: #10B981; margin-top: 2px;" id="incomeCardBalance">${balFormatted}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 12px; color: #94A3B8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Income</div>
+            <div style="font-size: 22px; font-weight: 800; color: #F59E0B; margin-top: 2px;" id="incomeCardTotalYield">${incFormatted}</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 10px 12px;">
+            <div style="font-size: 11px; color: #94A3B8;">Approved Products</div>
+            <div style="font-size: 15px; font-weight: 700; color: #FFF; margin-top: 2px;">${activePlans.length} Active</div>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 10px 12px;">
+            <div style="font-size: 11px; color: #94A3B8;">Daily Return</div>
+            <div style="font-size: 15px; font-weight: 700; color: #34D399; margin-top: 2px;">+Br ${totalDailyYield.toFixed(2)} / day</div>
+          </div>
+        </div>
+
+        ${activePlans.length > 0 ? `
+          <button type="button" onclick="claimDailyYield()" class="btn-primary-action" style="width: 100%; margin-top: 16px; background: #10B981; color: #FFF; border-radius: 10px; padding: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Claim Daily Income Yield
+          </button>
+        ` : ''}
+      </div>
+
+      <!-- Approved Purchased Products Title -->
+      <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="font-size: 16px; font-weight: 700; color: #1E293B; margin: 0;">Purchased Products (Approved)</h3>
+        <span style="font-size: 12px; color: #10B981; font-weight: 700;">${activePlans.length} Running</span>
+      </div>
+  `;
+
+  if (activePlans.length === 0) {
+    html += `
+      <div style="background: #FFF; border: 1px dashed #CBD5E1; border-radius: 12px; padding: 24px 16px; text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 32px; margin-bottom: 8px;">🌱</div>
+        <div style="font-size: 15px; font-weight: 700; color: #334155; margin-bottom: 4px;">No Active Approved Products Yet</div>
+        <div style="font-size: 13px; color: #64748B; margin-bottom: 16px;">Buy a VIP plan or complete payment approval to start earning daily income!</div>
+        <button type="button" onclick="switchTab('home')" style="background: #10B981; color: #FFF; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer;">
+          Explore Products
+        </button>
       </div>
     `;
   } else {
-    container.innerHTML = `
-      <div class="income-cards-list" style="padding: 16px;">
-        ${user.activePlans.map(plan => {
+    html += `
+      <div class="income-cards-list" style="margin-bottom: 20px;">
+        ${activePlans.map(plan => {
           const imgUrl = plan.image || getPlanImage(plan.name);
           const priceNum = parseNum(plan.price);
           const dailyNum = parseNum(plan.daily);
@@ -1311,7 +1422,7 @@ function renderIncomeView() {
             <div class="produce-card-white" style="margin-bottom: 12px;">
               <div class="produce-card-body" style="margin-bottom: 12px;">
                 <div class="produce-img-square">
-                  <span class="quota-badge-topleft" style="background: #10B981; color: #FFFFFF; font-weight: 700;">Running</span>
+                  <span class="quota-badge-topleft" style="background: #10B981; color: #FFFFFF; font-weight: 700;">Approved</span>
                   <img src="${imgUrl}" alt="${plan.name}" onerror="this.src='plan_b.png'">
                 </div>
                 <div class="produce-info-right">
@@ -1335,7 +1446,7 @@ function renderIncomeView() {
               </div>
               <div class="income-status-banner" style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #059669; font-weight: 700; font-size: 12.5px; text-align: center; padding: 8px 12px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 6px;">
                 <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #059669;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Active & Generating Daily Yield
+                Approved by Admin & Active Daily Yield
               </div>
             </div>
           `;
@@ -1343,6 +1454,39 @@ function renderIncomeView() {
       </div>
     `;
   }
+
+  // Pending Admin Approval Section (if any product is waiting for payment approval)
+  if (pendingPlans.length > 0) {
+    html += `
+      <div style="margin-top: 20px; margin-bottom: 12px;">
+        <h3 style="font-size: 16px; font-weight: 700; color: #D97706; margin: 0;">Pending Admin Approval (${pendingPlans.length})</h3>
+      </div>
+      <div class="pending-cards-list">
+        ${pendingPlans.map(plan => `
+          <div class="produce-card-white" style="margin-bottom: 12px; border: 1px solid #FCD34D;">
+            <div class="produce-card-body" style="margin-bottom: 12px;">
+              <div class="produce-img-square">
+                <span class="quota-badge-topleft" style="background: #F59E0B; color: #FFF; font-weight: 700;">Pending</span>
+                <img src="${plan.image || getPlanImage(plan.name)}" alt="${plan.name}">
+              </div>
+              <div class="produce-info-right">
+                <div class="produce-title-bold">${plan.name}</div>
+                <div class="produce-price-large">Br ${parseNum(plan.price).toFixed(2)}</div>
+                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Daily Yield: <strong style="color:#10B981;">Br ${parseNum(plan.daily)}</strong></div>
+              </div>
+            </div>
+            <div class="income-status-banner" style="background: #FEF3C7; border: 1px solid #FDE68A; color: #B45309; font-weight: 700; font-size: 12.5px; text-align: center; padding: 8px 12px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #B45309;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ⏳ Awaiting Deposit Payment / Admin Approval
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
 }
 
 // Claim Daily Yield Handler
@@ -2293,61 +2437,62 @@ function renderTeamView() {
   const currentTab = currentTeamLevel || 1;
   const user = state.currentUser;
 
-  let members = [];
-  let totalRecharge = 0;
-  let totalSize = 0;
-  let totalCommission = 0;
+  let tabMembers = [];
+  let totalRechargeAllLevels = 0;
+  let totalTeamSizeAllLevels = 0;
 
-  // Calculate live team stats strictly from registered users
   if (user) {
     for (let k in state.registeredUsers) {
       const u = state.registeredUsers[k];
       if (u.mobile === user.mobile) continue;
 
-      let isLevelMember = false;
-      if (currentTab === 1 && u.level1Referrer === user.mobile) isLevelMember = true;
-      if (currentTab === 2 && u.level2Referrer === user.mobile) isLevelMember = true;
-      if (currentTab === 3 && u.level3Referrer === user.mobile) isLevelMember = true;
+      const userRecharge = (u.activePlans || []).reduce((sum, p) => sum + (p.price || 0), 0);
+      const userWithdraw = (u.history || []).filter(h => h && h.type && h.type.includes('Withdraw')).reduce((sum, h) => sum + Math.abs(h.amount || 0), 0);
+      const joinDate = u.registeredAt ? u.registeredAt.replace('T', ' ').substring(0, 16) : new Date().toISOString().replace('T', ' ').substring(0, 16);
+      const fullPhone = u.fullMobile || u.mobile;
 
-      if (isLevelMember) {
-        const userRecharge = (u.activePlans || []).reduce((sum, p) => sum + (p.price || 0), 0);
-        const userWithdraw = (u.history || []).filter(h => h && h.type && h.type.includes('Withdraw')).reduce((sum, h) => sum + Math.abs(h.amount || 0), 0);
-        const joinDate = u.registeredAt ? u.registeredAt.replace('T', ' ').substring(0, 19) : new Date().toISOString().replace('T', ' ').substring(0, 19);
+      // Check if member belongs to Level 1, 2, or 3
+      const isL1 = u.level1Referrer === user.mobile || (user.fullMobile && u.level1Referrer === user.fullMobile);
+      const isL2 = u.level2Referrer === user.mobile || (user.fullMobile && u.level2Referrer === user.fullMobile);
+      const isL3 = u.level3Referrer === user.mobile || (user.fullMobile && u.level3Referrer === user.fullMobile);
 
-        const masked = u.mobile.length >= 7 ? u.mobile.substring(0, 3) + '****' + u.mobile.substring(u.mobile.length - 5) : u.mobile;
-        members.push({
-          phone: masked,
+      if (isL1 || isL2 || isL3) {
+        totalTeamSizeAllLevels++;
+        totalRechargeAllLevels += userRecharge;
+      }
+
+      let matchesActiveTab = false;
+      let tierRate = 0.25;
+      if (currentTab === 1 && isL1) { matchesActiveTab = true; tierRate = 0.25; }
+      if (currentTab === 2 && isL2) { matchesActiveTab = true; tierRate = 0.03; }
+      if (currentTab === 3 && isL3) { matchesActiveTab = true; tierRate = 0.02; }
+
+      if (matchesActiveTab) {
+        const commFromMember = (user.memberCommissions && user.memberCommissions[u.mobile]) ? user.memberCommissions[u.mobile] : (userRecharge * tierRate);
+        tabMembers.push({
+          phone: fullPhone,
           recharge: userRecharge,
           withdraw: userWithdraw,
+          commission: commFromMember,
           time: joinDate
         });
       }
     }
-
-    totalSize = members.length;
-    totalRecharge = members.reduce((sum, m) => sum + m.recharge, 0);
-
-    if (user.teamCommissionBreakdown) {
-      if (currentTab === 1) totalCommission = user.teamCommissionBreakdown.level1 || 0;
-      if (currentTab === 2) totalCommission = user.teamCommissionBreakdown.level2 || 0;
-      if (currentTab === 3) totalCommission = user.teamCommissionBreakdown.level3 || 0;
-    } else {
-      const rate = currentTab === 1 ? 0.25 : (currentTab === 2 ? 0.03 : 0.02);
-      totalCommission = totalRecharge * rate;
-    }
   }
+
+  const overallCommission = user ? (user.totalTeamCommission || 0) : 0;
 
   const rechargeEl = document.getElementById('teamRechargeVal');
   const sizeEl = document.getElementById('teamSizeVal');
   const commEl = document.getElementById('teamCommissionVal');
   const container = document.getElementById('teamMembersList');
 
-  if (rechargeEl) rechargeEl.innerText = `Br ${totalRecharge.toLocaleString()}`;
-  if (sizeEl) sizeEl.innerText = totalSize;
-  if (commEl) commEl.innerText = `Br ${totalCommission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (rechargeEl) rechargeEl.innerText = `Br ${totalRechargeAllLevels.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (sizeEl) sizeEl.innerText = totalTeamSizeAllLevels;
+  if (commEl) commEl.innerText = `Br ${overallCommission.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   if (container) {
-    if (members.length === 0) {
+    if (tabMembers.length === 0) {
       container.innerHTML = `
         <div style="background: var(--color-surface); border-radius: var(--radius-lg); padding: 32px 20px; text-align: center; border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
           <div style="width: 56px; height: 56px; margin: 0 auto 12px auto; background: var(--color-surface-subtle); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border);">
@@ -2358,24 +2503,20 @@ function renderTeamView() {
         </div>
       `;
     } else {
-      container.innerHTML = members.map(member => `
-        <div class="team-member-card">
-          <div class="team-member-info-left">
-            <div class="team-member-phone">Mobile: ${member.phone}</div>
-            <div class="team-member-stats-row">
-              <div>Recharge: <span>${member.recharge}</span></div>
-              <div>Withdraw: <span>${member.withdraw}</span></div>
+      container.innerHTML = tabMembers.map(member => `
+        <div class="team-member-card" style="background: #FFFFFF; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div class="team-member-info-left" style="flex: 1;">
+            <div class="team-member-phone" style="font-weight: 700; font-size: 15px; color: #0F172A; margin-bottom: 4px;">
+              📱 Mobile: <span style="color: #10B981;">${member.phone}</span>
             </div>
-            <div class="team-member-time">Time : ${member.time}</div>
+            <div class="team-member-stats-row" style="font-size: 13px; color: #64748B; display: flex; gap: 14px; margin-bottom: 4px;">
+              <div>Recharge: <strong style="color: #0F172A;">Br ${member.recharge.toFixed(2)}</strong></div>
+              <div>Commission: <strong style="color: #F59E0B;">Br ${member.commission.toFixed(2)}</strong></div>
+            </div>
+            <div class="team-member-time" style="font-size: 11.5px; color: #94A3B8;">Time : ${member.time}</div>
           </div>
-          <div class="team-member-badge-right">
-            <div class="brand-logo-icon" style="width:34px; height:34px; border-radius:8px;">
-              <svg viewBox="0 0 40 40" width="24" height="24" fill="none">
-                <rect width="40" height="40" rx="10" fill="#0B0E19"/>
-                <path d="M12 26C12 18 18 12 26 12C26 20 20 26 12 26Z" fill="#10B981"/>
-                <path d="M14 24L20 18L23 21L28 15" stroke="#F59E0B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #059669; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px;">
+            Level ${currentTab} (${currentTab === 1 ? '25%' : (currentTab === 2 ? '3%' : '2%')})
           </div>
         </div>
       `).join('');
@@ -2817,6 +2958,7 @@ function adminGiveUserBonus(phone) {
       state.save();
       showToast(`🎁 Added Br ${bonus.toFixed(2)} bonus to user ${phone}!`);
       renderAdminUsers();
+      if (typeof renderIncomeView === 'function') renderIncomeView();
     }
   });
 }
@@ -2849,6 +2991,7 @@ function adminEditUserBalance(phone) {
       state.save();
       showToast(`✅ Balance for ${phone} set to Br ${newBal.toFixed(2)}!`);
       renderAdminUsers();
+      if (typeof renderIncomeView === 'function') renderIncomeView();
     }
   });
 }
@@ -2880,6 +3023,7 @@ function adminEditUserIncome(phone) {
       state.save();
       showToast(`✅ Income for ${phone} updated to Br ${newIncome.toFixed(2)}!`);
       renderAdminUsers();
+      if (typeof renderIncomeView === 'function') renderIncomeView();
     }
   });
 }
@@ -2887,7 +3031,7 @@ function adminEditUserIncome(phone) {
 function adminRemoveUserProducts(phone) {
   const found = findRegisteredUser(phone);
   if (!found) { showToast('User not found!', true); return; }
-  const { user } = found;
+  const { key, user } = found;
   if (!user.activePlans || user.activePlans.length === 0) {
     showToast('User has no active products to remove.', true); return;
   }
@@ -2898,9 +3042,11 @@ function adminRemoveUserProducts(phone) {
     confirmLabel: 'Remove All',
     onConfirm: () => {
       user.activePlans = [];
+      if (state.currentUser && (state.currentUser.mobile === phone || state.currentUser.mobile === key)) state.currentUser.activePlans = [];
       state.save();
       showToast(`✅ All products removed from user ${phone}!`);
       renderAdminUsers();
+      if (typeof renderIncomeView === 'function') renderIncomeView();
     }
   });
 }
@@ -3141,6 +3287,7 @@ function approveDepositRequest(depId) {
   showToast(`✅ Deposit for ${dep.phone} APPROVED! ETB ${creditAmt.toFixed(2)} credited.`);
   renderAdminDeposits();
   renderAdminDashboard();
+  if (typeof renderIncomeView === 'function') renderIncomeView();
 }
 
 function rejectDepositRequest(depId) {

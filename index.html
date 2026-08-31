@@ -1969,6 +1969,26 @@
     </div>
   </div>
 
+  <!-- 5. Payment Submission Success Modal -->
+  <div class="modal-overlay" id="paymentSuccessModal">
+    <div class="modal-dialog-white" style="text-align: center; padding: 24px 20px;">
+      <div style="width: 64px; height: 64px; background: #ECFDF5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 2px solid #10B981;">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div style="font-size: 19px; font-weight: 800; color: #10B981; margin-bottom: 8px;">
+        Submission Successful!
+      </div>
+      <div style="font-size: 14px; color: #334155; margin-bottom: 20px; line-height: 1.5;" id="paymentSuccessModalMsg">
+        Your payment details have been submitted successfully.<br><strong style="color: #D97706;">Status: Pending Approval</strong>
+      </div>
+      <button type="button" class="btn-primary-action" style="background: #10B981; width: 100%; border-radius: 10px; padding: 12px; font-weight: 700; color: #FFF; border: none; cursor: pointer;" onclick="finishPaymentSuccess()">
+        OK / ተረድቻለሁ
+      </button>
+    </div>
+  </div>
+
   <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <!-- Firebase Realtime Database -->
