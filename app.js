@@ -1477,7 +1477,7 @@ function renderIncomeView() {
             </div>
             <div class="income-status-banner" style="background: #FEF3C7; border: 1px solid #FDE68A; color: #B45309; font-weight: 700; font-size: 12.5px; text-align: center; padding: 8px 12px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 6px;">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #B45309;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              ⏳ Awaiting Deposit Payment / Admin Approval
+              ⏳ Awaiting Deposit Payment
             </div>
           </div>
         `).join('')}
