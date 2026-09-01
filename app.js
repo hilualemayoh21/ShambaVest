@@ -1475,9 +1475,8 @@ function renderIncomeView() {
                 <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Daily Yield: <strong style="color:#10B981;">Br ${parseNum(plan.daily)}</strong></div>
               </div>
             </div>
-            <div class="income-status-banner" style="background: #FEF3C7; border: 1px solid #FDE68A; color: #B45309; font-weight: 700; font-size: 12.5px; text-align: center; padding: 8px 12px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 6px;">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #B45309;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              ⏳ Awaiting Deposit Payment
+            <div class="income-status-banner" style="background: #FEF3C7; border: 1px solid #FDE68A; color: #B45309; font-weight: 700; font-size: 12.5px; text-align: center; padding: 8px 12px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+              Admin Approval
             </div>
           </div>
         `).join('')}
@@ -2401,6 +2400,9 @@ function distributeTeamCommissions(purchaserUser, amount, sourceDesc) {
       if (tier.level === 2) referrer.teamCommissionBreakdown.level2 += commissionAmount;
       if (tier.level === 3) referrer.teamCommissionBreakdown.level3 += commissionAmount;
 
+      if (!referrer.memberCommissions) referrer.memberCommissions = {};
+      referrer.memberCommissions[purchaserUser.mobile] = (referrer.memberCommissions[purchaserUser.mobile] || 0) + commissionAmount;
+
       if (!referrer.history) referrer.history = [];
       referrer.history.unshift({
         id: 'COMM_' + Date.now() + '_' + tier.level,
@@ -2423,6 +2425,7 @@ function distributeTeamCommissions(purchaserUser, amount, sourceDesc) {
         state.currentUser.balance = referrer.balance;
         state.currentUser.totalTeamCommission = referrer.totalTeamCommission;
         state.currentUser.teamCommissionBreakdown = referrer.teamCommissionBreakdown;
+        state.currentUser.memberCommissions = referrer.memberCommissions;
         state.currentUser.history = referrer.history;
       }
 
@@ -2446,7 +2449,13 @@ function renderTeamView() {
       const u = state.registeredUsers[k];
       if (u.mobile === user.mobile) continue;
 
-      const userRecharge = (u.activePlans || []).reduce((sum, p) => sum + (p.price || 0), 0);
+      const activePlansRecharge = (u.activePlans || []).reduce((sum, p) => sum + (p.price || 0), 0);
+      const completedDepositsRecharge = (u.history || [])
+        .filter(h => h && (h.status === 'COMPLETED' || h.status === 'Approved') && (h.type.includes('Deposit') || h.type.includes('Recharge') || h.type.includes('Purchase')))
+        .reduce((sum, h) => sum + Math.abs(h.amount || 0), 0);
+      const directTotalRecharge = u.totalRecharge || 0;
+
+      const userRecharge = Math.max(activePlansRecharge, completedDepositsRecharge, directTotalRecharge);
       const userWithdraw = (u.history || []).filter(h => h && h.type && h.type.includes('Withdraw')).reduce((sum, h) => sum + Math.abs(h.amount || 0), 0);
       const joinDate = u.registeredAt ? u.registeredAt.replace('T', ' ').substring(0, 16) : new Date().toISOString().replace('T', ' ').substring(0, 16);
       const fullPhone = u.fullMobile || u.mobile;
@@ -2468,7 +2477,9 @@ function renderTeamView() {
       if (currentTab === 3 && isL3) { matchesActiveTab = true; tierRate = 0.02; }
 
       if (matchesActiveTab) {
-        const commFromMember = (user.memberCommissions && user.memberCommissions[u.mobile]) ? user.memberCommissions[u.mobile] : (userRecharge * tierRate);
+        const commFromMember = (user.memberCommissions && user.memberCommissions[u.mobile] !== undefined)
+          ? user.memberCommissions[u.mobile]
+          : (userRecharge * tierRate);
         tabMembers.push({
           phone: fullPhone,
           recharge: userRecharge,
@@ -3231,6 +3242,7 @@ function approveDepositRequest(depId) {
     const user = state.registeredUsers[key];
     if (user.mobile.includes(dep.phone) || dep.phone.includes(user.mobile)) {
       user.balance += creditAmt;
+      user.totalRecharge = (user.totalRecharge || 0) + creditAmt;
       const h = (user.history || []).find(item => item.id === depId || item.type.includes('Deposit'));
       if (h) h.status = 'COMPLETED';
       targetUser = user;
@@ -3239,6 +3251,7 @@ function approveDepositRequest(depId) {
 
   if (state.currentUser && (state.currentUser.mobile.includes(dep.phone) || dep.phone.includes(state.currentUser.mobile))) {
     state.currentUser.balance += creditAmt;
+    state.currentUser.totalRecharge = (state.currentUser.totalRecharge || 0) + creditAmt;
     targetUser = state.currentUser;
   }
 
