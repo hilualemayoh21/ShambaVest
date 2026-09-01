@@ -275,8 +275,8 @@ class AppState {
         balance: `${user.balance.toFixed(2)} ETB`,
         rawBalance: user.balance,
         role: 'User',
-        bank: 'N/A',
-        ac: 'N/A',
+        bank: user.bankDetails && user.bankDetails.bankName ? user.bankDetails.bankName : 'N/A',
+        ac: user.bankDetails && user.bankDetails.accountNumber ? user.bankDetails.accountNumber : 'N/A',
         joined: joinedStr
       });
     }
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Re-render UI depending on active tab
         if (state.isAdminMode) {
-          if (typeof renderAdminUsersList === 'function') renderAdminUsersList();
+          if (typeof renderAdminUsers === 'function') renderAdminUsers();
           if (typeof renderAdminDeposits === 'function') renderAdminDeposits();
           if (typeof renderAdminWithdrawals === 'function') renderAdminWithdrawals();
           if (typeof updateAdminDashboardStats === 'function') updateAdminDashboardStats();
