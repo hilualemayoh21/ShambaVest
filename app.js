@@ -1987,9 +1987,9 @@ function renderWithdrawView() {
   if (balEl) balEl.innerText = `Br ${user.balance.toFixed(2)}`;
 
   const bd = user.bankDetails || {
-    realName: 'Nobel',
-    bankName: 'Commercial Bank of Ethiopia',
-    accountNumber: '1000736684318'
+    realName: '',
+    bankName: '',
+    accountNumber: ''
   };
 
   const nameEl = document.getElementById('withdrawRealNameVal');
@@ -2062,9 +2062,9 @@ function submitWithdrawalScreen() {
   }
 
   const bd = user.bankDetails || {
-    realName: 'Nobel',
-    bankName: 'Commercial Bank of Ethiopia',
-    accountNumber: '1000736684318'
+    realName: '',
+    bankName: '',
+    accountNumber: ''
   };
 
   const wId = `w_${Date.now()}`;
@@ -2108,9 +2108,9 @@ function submitWithdrawalScreen() {
 function renderBindWalletView() {
   if (!state.currentUser) return;
   const bd = state.currentUser.bankDetails || {
-    realName: 'Nobel',
-    bankName: 'Commercial Bank of Ethiopia',
-    accountNumber: '1000736684318'
+    realName: '',
+    bankName: '',
+    accountNumber: ''
   };
 
   const nameIn = document.getElementById('bindRealNameInput');
