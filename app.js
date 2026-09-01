@@ -1378,12 +1378,7 @@ function renderIncomeView() {
           </div>
         </div>
 
-        ${activePlans.length > 0 ? `
-          <button type="button" onclick="claimDailyYield()" class="btn-primary-action" style="width: 100%; margin-top: 16px; background: #10B981; color: #FFF; border-radius: 10px; padding: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Claim Daily Income Yield
-          </button>
-        ` : ''}
+
       </div>
 
       <!-- Approved Purchased Products Title -->
@@ -1488,35 +1483,7 @@ function renderIncomeView() {
   container.innerHTML = html;
 }
 
-// Claim Daily Yield Handler
-function claimDailyYield() {
-  if (!state.currentUser) return;
-  const user = state.currentUser;
 
-  let totalClaim = 0;
-  if (user.activePlans && user.activePlans.length > 0) {
-    user.activePlans.forEach(p => {
-      totalClaim += parseFloat(p.daily);
-    });
-  } else {
-    totalClaim = 50.00;
-  }
-
-  user.balance += totalClaim;
-  user.accumulatedYield += totalClaim;
-  user.history.unshift({
-    type: 'Daily Yield Claim',
-    amount: totalClaim,
-    date: new Date().toLocaleDateString(),
-    status: 'COMPLETED'
-  });
-
-  state.registeredUsers[user.mobile] = user;
-  state.save();
-
-  renderIncomeView();
-  showToast(`Successfully claimed Br ${totalClaim.toFixed(2)} daily yield to balance! 🎉`);
-}
 
 // Render Profile View Details (Matching Image 2 Reference)
 function renderProfileView() {
